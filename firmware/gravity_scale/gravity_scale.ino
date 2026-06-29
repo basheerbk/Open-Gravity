@@ -1,5 +1,5 @@
 /**
- * Gravity Lab — ESP32 + HX711 load cell
+ * Open Gravity — ESP32 + HX711 load cell
  *
  * Libraries (Arduino Library Manager):
  *   - HX711 by Bogdan Necula
@@ -11,7 +11,7 @@
  *   HX711 DT   -> GPIO 16 (DOUT)
  *   HX711 SCK  -> GPIO 17 (SCK)
  *
- * WiFi AP: GravityLab-Scale  (password: gravitylab)
+ * WiFi AP: OpenGravity-Scale  (password: opengravity)
  * WebSocket: ws://192.168.4.1:81/
  */
 
@@ -23,8 +23,8 @@
 #define DOUT_PIN 16
 #define SCK_PIN 17
 
-#define WIFI_SSID "GravityLab-Scale"
-#define WIFI_PASS "gravitylab"
+#define WIFI_SSID "OpenGravity-Scale"
+#define WIFI_PASS "opengravity"
 #define WS_PORT 81
 
 #define STABLE_TIME_MS 3000

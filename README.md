@@ -2,7 +2,8 @@
 
 Compare your **mass**, **weight**, and **jump height** on **Earth**, **Moon**, **Mars**, and **Pluto** — with optional live input from an ESP32 load-cell scale.
 
-**Repository:** [github.com/basheerbk/Open-Gravity](https://github.com/basheerbk/Open-Gravity)
+**Repository:** [github.com/basheerbk/Open-Gravity](https://github.com/basheerbk/Open-Gravity)  
+**Live demo:** [open-gravity-one.vercel.app](https://open-gravity-one.vercel.app)
 
 ## Run the web app
 
@@ -59,7 +60,7 @@ http://localhost:3000/?scale=auto
 
 ### Connect
 
-1. ESP32 creates WiFi AP: **`GravityLab-Scale`** (password: `gravitylab`)
+1. ESP32 creates WiFi AP: **`OpenGravity-Scale`** (password: `opengravity`)
 2. Connect the display PC to that network (or use ESP32 station mode in a future update)
 3. In the app, click **Connect scale** (or use `?scale=auto`)
 4. WebSocket URL: `ws://192.168.4.1:81/`
