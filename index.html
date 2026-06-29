@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Open Gravity</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header__inner">
+      <h1 class="header__title">Open Gravity</h1>
+      <div class="header__actions">
+        <button type="button" class="header__icon-btn" id="settingsBtn" aria-label="Settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button type="button" class="header__icon-btn" id="aboutBtn" aria-label="About">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.75"/>
+            <path d="M12 11v5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+            <circle cx="12" cy="8" r="0.75" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="exhibit-banner" id="exhibitBanner" hidden>
+    <p class="exhibit-banner__phase" id="exhibitPhase">Jump onto the pad!</p>
+    <p class="exhibit-banner__countdown" id="exhibitCountdown" hidden></p>
+    <p class="exhibit-banner__impact" id="exhibitImpact" hidden></p>
+  </div>
+
+  <main class="panels" id="panels" hidden>
+    <section class="panel panel--earth" data-body="earth">
+      <div class="panel__bg" aria-hidden="true">
+        <div class="panel__sky">
+          <div class="panel__clouds"></div>
+        </div>
+        <div class="panel__ground">
+          <div class="panel__platform"></div>
+        </div>
+      </div>
+      <div class="panel__hud">
+        <div class="panel__meta">
+          <h2 class="panel__title">Earth</h2>
+          <p class="panel__gravity"><span class="panel__g-value">9.81</span> m/s²</p>
+        </div>
+        <div class="scene">
+          <div class="jump-meter" aria-label="Jump height meter">
+            <span class="jump-meter__title" aria-hidden="true">Jump</span>
+            <div class="jump-meter__scale">
+              <div class="jump-meter__labels" data-meter-labels aria-hidden="true"></div>
+              <div class="jump-meter__track">
+                <div class="jump-meter__fill" data-jump-fill></div>
+                <div class="jump-meter__cap" data-jump-cap aria-hidden="true"></div>
+              </div>
+            </div>
+            <span class="jump-meter__value"><span data-jump-display>—</span> m</span>
+            <span class="jump-meter__note" data-jump-note></span>
+          </div>
+          <div class="astronaut-wrap">
+            <img src="astronaut.svg" alt="" class="astronaut" width="160" height="240" />
+            <div class="shadow"></div>
+            <div class="platform-edge" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="stats-card">
+          <div class="stat">
+            <span class="stat__label">Mass</span>
+            <div class="stat__row">
+              <span class="stat__value" data-mass-display>—</span>
+              <span class="stat__unit">kg</span>
+            </div>
+          </div>
+          <div class="stat">
+            <span class="stat__label">Weight</span>
+            <div class="stat__row">
+              <span class="stat__value" data-weight-display>—</span>
+              <span class="stat__unit">N</span>
+            </div>
+          </div>
+          <span class="stat__compare" data-compare-display>—</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel--moon" data-body="moon">
+      <div class="panel__bg" aria-hidden="true">
+        <div class="panel__sky">
+          <div class="panel__stars"></div>
+          <div class="panel__earth-distant"></div>
+        </div>
+        <div class="panel__ground">
+          <div class="panel__platform"></div>
+        </div>
+      </div>
+      <div class="panel__hud">
+        <div class="panel__meta">
+          <h2 class="panel__title">Moon</h2>
+          <p class="panel__gravity"><span class="panel__g-value">1.62</span> m/s²</p>
+        </div>
+        <div class="scene">
+          <div class="jump-meter" aria-label="Jump height meter">
+            <span class="jump-meter__title" aria-hidden="true">Jump</span>
+            <div class="jump-meter__scale">
+              <div class="jump-meter__labels" data-meter-labels aria-hidden="true"></div>
+              <div class="jump-meter__track">
+                <div class="jump-meter__fill" data-jump-fill></div>
+                <div class="jump-meter__cap" data-jump-cap aria-hidden="true"></div>
+              </div>
+            </div>
+            <span class="jump-meter__value"><span data-jump-display>—</span> m</span>
+            <span class="jump-meter__note" data-jump-note></span>
+          </div>
+          <div class="astronaut-wrap">
+            <img src="astronaut.svg" alt="" class="astronaut" width="160" height="240" />
+            <div class="shadow"></div>
+            <div class="platform-edge" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="stats-card">
+          <div class="stat">
+            <span class="stat__label">Mass</span>
+            <div class="stat__row">
+              <span class="stat__value" data-mass-display>—</span>
+              <span class="stat__unit">kg</span>
+            </div>
+          </div>
+          <div class="stat">
+            <span class="stat__label">Weight</span>
+            <div class="stat__row">
+              <span class="stat__value" data-weight-display>—</span>
+              <span class="stat__unit">N</span>
+            </div>
+          </div>
+          <span class="stat__compare" data-compare-display>—</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel--mars" data-body="mars">
+      <div class="panel__bg" aria-hidden="true">
+        <div class="panel__sky">
+          <div class="panel__haze"></div>
+        </div>
+        <div class="panel__ground">
+          <div class="panel__platform"></div>
+        </div>
+      </div>
+      <div class="panel__hud">
+        <div class="panel__meta">
+          <h2 class="panel__title">Mars</h2>
+          <p class="panel__gravity"><span class="panel__g-value">3.71</span> m/s²</p>
+        </div>
+        <div class="scene">
+          <div class="jump-meter" aria-label="Jump height meter">
+            <span class="jump-meter__title" aria-hidden="true">Jump</span>
+            <div class="jump-meter__scale">
+              <div class="jump-meter__labels" data-meter-labels aria-hidden="true"></div>
+              <div class="jump-meter__track">
+                <div class="jump-meter__fill" data-jump-fill></div>
+                <div class="jump-meter__cap" data-jump-cap aria-hidden="true"></div>
+              </div>
+            </div>
+            <span class="jump-meter__value"><span data-jump-display>—</span> m</span>
+            <span class="jump-meter__note" data-jump-note></span>
+          </div>
+          <div class="astronaut-wrap">
+            <img src="astronaut.svg" alt="" class="astronaut" width="160" height="240" />
+            <div class="shadow"></div>
+            <div class="platform-edge" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="stats-card">
+          <div class="stat">
+            <span class="stat__label">Mass</span>
+            <div class="stat__row">
+              <span class="stat__value" data-mass-display>—</span>
+              <span class="stat__unit">kg</span>
+            </div>
+          </div>
+          <div class="stat">
+            <span class="stat__label">Weight</span>
+            <div class="stat__row">
+              <span class="stat__value" data-weight-display>—</span>
+              <span class="stat__unit">N</span>
+            </div>
+          </div>
+          <span class="stat__compare" data-compare-display>—</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel--pluto" data-body="pluto">
+      <div class="panel__bg" aria-hidden="true">
+        <div class="panel__sky">
+          <div class="panel__stars panel__stars--sparse"></div>
+        </div>
+        <div class="panel__ground">
+          <div class="panel__platform"></div>
+        </div>
+      </div>
+      <div class="panel__hud">
+        <div class="panel__meta">
+          <h2 class="panel__title">Pluto</h2>
+          <p class="panel__gravity"><span class="panel__g-value">0.62</span> m/s²</p>
+        </div>
+        <div class="scene">
+          <div class="jump-meter" aria-label="Jump height meter">
+            <span class="jump-meter__title" aria-hidden="true">Jump</span>
+            <div class="jump-meter__scale">
+              <div class="jump-meter__labels" data-meter-labels aria-hidden="true"></div>
+              <div class="jump-meter__track">
+                <div class="jump-meter__fill" data-jump-fill></div>
+                <div class="jump-meter__cap" data-jump-cap aria-hidden="true"></div>
+              </div>
+            </div>
+            <span class="jump-meter__value"><span data-jump-display>—</span> m</span>
+            <span class="jump-meter__note" data-jump-note></span>
+          </div>
+          <div class="astronaut-wrap">
+            <img src="astronaut.svg" alt="" class="astronaut" width="160" height="240" />
+            <div class="shadow"></div>
+            <div class="platform-edge" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="stats-card">
+          <div class="stat">
+            <span class="stat__label">Mass</span>
+            <div class="stat__row">
+              <span class="stat__value" data-mass-display>—</span>
+              <span class="stat__unit">kg</span>
+            </div>
+          </div>
+          <div class="stat">
+            <span class="stat__label">Weight</span>
+            <div class="stat__row">
+              <span class="stat__value" data-weight-display>—</span>
+              <span class="stat__unit">N</span>
+            </div>
+          </div>
+          <span class="stat__compare" data-compare-display>—</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog class="modal" id="weightModal">
+    <form method="dialog" class="modal__form modal__form--weight" id="weightForm">
+      <p class="modal__eyebrow">Get started</p>
+      <h2 class="modal__title" id="modalTitle">What's your mass?</h2>
+      <p class="modal__hint" id="modalHint">Enter your body mass in kilograms. We'll show your weight and jump height on Earth, the Moon, Mars, and Pluto.</p>
+
+      <div class="modal__modes" id="modalModes">
+        <button type="button" class="modal__mode-btn" id="modeScaleBtn" disabled aria-disabled="true">
+          Use scale
+          <span class="modal__mode-badge">Soon</span>
+        </button>
+        <button type="button" class="modal__mode-btn modal__mode-btn--active" id="modeManualBtn">Enter manually</button>
+      </div>
+
+      <div class="modal__scale-panel" id="modalScalePanel" hidden>
+        <p class="modal__live-kg"><span id="modalLiveKg">—</span> <span class="modal__suffix">kg</span></p>
+        <p class="modal__scale-hint">Jump onto the pad, then stand still for 3 seconds.</p>
+        <button type="button" class="btn-secondary" id="modalConnectBtn">Connect to scale</button>
+      </div>
+
+      <div class="modal__manual-panel" id="modalManualPanel">
+        <label class="modal__label" for="weightInput">Your mass</label>
+        <div class="modal__input-row">
+          <input
+            type="number"
+            id="weightInput"
+            class="modal__input"
+            min="1"
+            max="300"
+            step="0.1"
+            inputmode="decimal"
+            placeholder="70"
+            value="70"
+            autocomplete="off"
+            enterkeyhint="go"
+            aria-describedby="weightRangeHint"
+          />
+          <span class="modal__suffix modal__suffix--input">kg</span>
+        </div>
+        <p class="modal__range-hint" id="weightRangeHint">Between 1 and 300 kg</p>
+        <p class="modal__error" id="weightError" hidden>Please enter a mass between 1 and 300 kg.</p>
+        <button type="submit" class="btn-primary">
+          <span>Explore gravity</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal modal--settings" id="settingsModal">
+    <div class="modal__form">
+      <div class="modal__form-head">
+        <h2 class="modal__title">Settings</h2>
+        <button type="button" class="modal__close" id="settingsCloseBtn" aria-label="Close">&times;</button>
+      </div>
+      <div class="scale-bar scale-bar--settings" id="scaleBar">
+        <span class="scale-dot" id="scaleDot" data-state="offline"></span>
+        <span class="scale-bar__status" id="scaleStatus">Scale offline</span>
+        <span class="scale-bar__kg" id="scaleLiveKg">— kg</span>
+      </div>
+      <div class="settings-actions">
+        <button type="button" class="btn-secondary" id="scaleConnectBtn">Connect scale</button>
+        <button type="button" class="btn-secondary" id="scaleTareBtn" hidden>Tare</button>
+        <button type="button" class="btn-secondary" id="scaleResetBtn" hidden>Reset</button>
+        <button type="button" class="btn-secondary" id="changeWeightBtn">Recalibrate weight</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="modal modal--about" id="aboutModal">
+    <div class="modal__form modal__form--about">
+      <button type="button" class="modal__close modal__close--float" id="aboutCloseBtn" aria-label="Close">&times;</button>
+      <h2 class="about-title">About</h2>
+      <p class="about-lead"><strong>Open Gravity</strong> compares your weight and jump height on Earth, the Moon, Mars, and Pluto.</p>
+      <p class="about-body">Use the load-cell scale or enter your mass manually. Weaker gravity means lighter weight and higher jumps — Pluto wins every time.</p>
+      <div class="about-footer">
+        <a class="about-link" href="https://basheer.diy" target="_blank" rel="noopener noreferrer">basheer.diy</a>
+        <span class="about-dot" aria-hidden="true">·</span>
+        <span class="about-label">Open source</span>
+      </div>
+      <p class="about-tagline">Gravity simulation for curious minds</p>
+    </div>
+  </dialog>
+
+  <script src="scale.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
