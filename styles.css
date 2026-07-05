@@ -1773,379 +1773,200 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   Results action bar
+   Status bar
    ───────────────────────────────────────────────────────────────── */
 
-.results-bar {
+.status-bar {
   position: sticky;
   top: 56px;
   z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.55rem 1.25rem;
+  padding: 0.45rem 1.25rem;
   background: rgba(10, 10, 20, 0.82);
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  flex-wrap: wrap;
 }
 
-.results-bar__info {
+.status-bar__info {
   font-size: 0.78rem;
   color: var(--text-muted);
   font-family: var(--font-mono, ui-monospace, monospace);
-  flex: 1;
-  min-width: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Camera picture-in-picture
+   ───────────────────────────────────────────────────────────────── */
+
+.camera-pip {
+  position: fixed;
+  bottom: calc(0.85rem + env(safe-area-inset-bottom, 0));
+  right: calc(0.85rem + env(safe-area-inset-right, 0));
+  z-index: 30;
+  width: clamp(168px, 20vw, 260px);
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(126, 200, 255, 0.08);
+  background: #0c0c12;
+  display: flex;
+  flex-direction: column;
+}
+
+.camera-pip__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.65rem;
+  background: rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.camera-pip__label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.camera-pip__phase {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(126, 200, 255, 0.85);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.results-bar__actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-shrink: 0;
+.camera-pip__phase--ready {
+  color: #9de0ff;
+  animation: pip-pulse 0.6s ease infinite alternate;
 }
 
-.results-bar__btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.9rem;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid rgba(126, 200, 255, 0.35);
-  background: rgba(126, 200, 255, 0.12);
-  color: rgba(126, 200, 255, 0.95);
-  transition: background 0.15s, border-color 0.15s;
+@keyframes pip-pulse {
+  from { opacity: 0.7; }
+  to   { opacity: 1; }
 }
 
-.results-bar__btn:hover {
-  background: rgba(126, 200, 255, 0.22);
-  border-color: rgba(126, 200, 255, 0.55);
-}
-
-.results-bar__btn--ghost {
-  background: transparent;
-  border-color: rgba(255, 255, 255, 0.12);
-  color: var(--text-muted);
-}
-
-.results-bar__btn--ghost:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: var(--text);
-}
-
-/* ─────────────────────────────────────────────────────────────────
-   Camera stage
-   ───────────────────────────────────────────────────────────────── */
-
-.camera-stage {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  background: #09090f;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  padding-top: calc(56px + 1.5rem); /* below header */
-}
-
-/* Setup card */
-.camera-setup-card {
+.camera-pip__media {
   position: relative;
-  width: 100%;
-  max-width: 480px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
-  padding: 2.25rem 2rem 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.camera-setup__eyebrow {
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(126, 200, 255, 0.7);
-  margin: 0;
-}
-
-.camera-setup__title {
-  font-family: var(--font-display);
-  font-size: clamp(1.4rem, 4vw, 1.9rem);
-  font-weight: 700;
-  margin: 0;
-  line-height: 1.15;
-}
-
-.camera-setup__tips {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.camera-setup__tips li {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.9rem;
-  color: var(--text-muted);
-}
-
-.camera-setup__tips li svg {
-  flex-shrink: 0;
-  color: rgba(126, 200, 255, 0.6);
-}
-
-.camera-setup__error {
-  margin: 0;
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
-  background: rgba(255, 100, 100, 0.12);
-  border: 1px solid rgba(255, 100, 100, 0.25);
-  color: #ff8585;
-  font-size: 0.85rem;
-  line-height: 1.5;
-}
-
-.camera-setup__actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.camera-setup__back {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.15s;
-  align-self: flex-start;
-}
-
-.camera-setup__back:hover {
-  color: var(--text);
-}
-
-/* Live camera view */
-.camera-live {
-  position: relative;
-  width: 100%;
-  max-width: 760px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.camera-live__media {
-  position: relative;
-  width: 100%;
   aspect-ratio: 4 / 3;
-  border-radius: 20px;
-  overflow: hidden;
   background: #111;
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.camera-live__video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scaleX(-1); /* mirror for natural feel */
-}
-
-.camera-live__canvas {
+.camera-pip__video {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scaleX(-1); /* mirror to match video */
+  transform: scaleX(-1);
+  display: block;
+}
+
+.camera-pip__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
   pointer-events: none;
 }
 
-.camera-live__hud {
+.camera-pip__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
 }
 
-.camera-live__phase {
-  font-family: var(--font-display);
-  font-size: clamp(1.4rem, 5vw, 2rem);
-  font-weight: 700;
-  text-align: center;
-  letter-spacing: -0.01em;
+.camera-pip__overlay--off {
+  display: none !important;
 }
 
-.camera-phase--ready {
-  color: #7ec8ff;
-  animation: pulse-ready 0.6s ease infinite alternate;
-}
-
-@keyframes pulse-ready {
-  from { opacity: 0.75; transform: scale(0.97); }
-  to   { opacity: 1;    transform: scale(1.03); }
-}
-
-.camera-live__hint {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  text-align: center;
-}
-
-.camera-live__skip {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  transition: color 0.15s;
-}
-
-.camera-live__skip:hover {
-  color: var(--text);
-}
-
-/* ── btn-text helper ─────────────────────────────────────────────── */
-.btn-text {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 0.4rem 0;
-  transition: color 0.15s;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: transparent;
-}
-
-.btn-text:hover {
-  color: var(--text);
-  text-decoration-color: currentColor;
-}
-
-/* ── Two-column input row in mass modal ──────────────────────────── */
-.modal__field-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
-
-.modal__field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.modal__label-optional {
-  font-size: 0.72rem;
-  font-weight: 400;
-  color: var(--text-muted);
-  margin-left: 0.25rem;
-}
-
-/* Mobile camera adjustments */
-@media (max-width: 768px) {
-  .camera-stage {
-    padding: 0.75rem;
-    padding-top: calc(56px + 0.75rem);
-  }
-
-  .camera-setup-card {
-    padding: 1.5rem 1.25rem;
-    gap: 1.1rem;
-    border-radius: 20px;
-  }
-
-  .camera-live__media {
-    aspect-ratio: 3 / 4; /* portrait for mobile */
-  }
-
-  .modal__field-row {
-    grid-template-columns: 1fr;
-  }
-
-  .results-bar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-    padding: 0.6rem 1rem;
-  }
-
-  .results-bar__info {
-    white-space: normal;
-  }
-}
-
-@media (max-width: 480px) {
-  .camera-setup-card {
-    border-radius: 16px;
-    padding: 1.25rem 1rem;
-  }
-}
-
-/* ── Camera live chip (shown in results bar while camera is running) ── */
-
-.camera-chip {
+.camera-pip__enable {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.3rem 0.7rem 0.3rem 0.5rem;
-  border-radius: 999px;
-  background: rgba(126, 200, 255, 0.1);
-  border: 1px solid rgba(126, 200, 255, 0.25);
-  font-size: 0.76rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.78rem;
   font-weight: 600;
-  color: rgba(126, 200, 255, 0.85);
-  letter-spacing: 0.02em;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.camera-chip--active {
-  background: rgba(126, 200, 255, 0.18);
-  border-color: rgba(126, 200, 255, 0.5);
+  cursor: pointer;
+  border: 1px solid rgba(126, 200, 255, 0.4);
+  background: rgba(126, 200, 255, 0.15);
   color: #9de0ff;
+  transition: background 0.15s, border-color 0.15s;
 }
 
-.camera-chip__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: rgba(126, 200, 255, 0.6);
-  animation: chip-pulse 1.8s ease infinite;
-  flex-shrink: 0;
+.camera-pip__enable:hover {
+  background: rgba(126, 200, 255, 0.25);
+  border-color: rgba(126, 200, 255, 0.6);
 }
 
-.camera-chip--active .camera-chip__dot {
-  background: #7ec8ff;
+.camera-pip__error {
+  margin: 0;
+  font-size: 0.68rem;
+  color: #ff8585;
+  text-align: center;
+  line-height: 1.4;
 }
 
-@keyframes chip-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.4; transform: scale(0.75); }
+.camera-pip__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0.25rem 0.4rem;
+  background: rgba(0, 0, 0, 0.45);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  min-height: 28px;
+}
+
+.camera-pip__retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.camera-pip__retry:hover {
+  background: rgba(126, 200, 255, 0.12);
+  color: #9de0ff;
+  border-color: rgba(126, 200, 255, 0.3);
+}
+
+/* Room for PiP on panels grid */
+.panels {
+  padding-bottom: calc(clamp(168px, 20vw, 260px) * 0.75 + 2rem);
+}
+
+@media (max-width: 768px) {
+  .camera-pip {
+    right: 50%;
+    transform: translateX(50%);
+    width: clamp(140px, 38vw, 200px);
+  }
+
+  .panels {
+    padding-bottom: calc(clamp(140px, 38vw, 200px) * 0.75 + 1.5rem);
+  }
 }

@@ -32,92 +32,13 @@
     <p class="exhibit-banner__impact" id="exhibitImpact" hidden></p>
   </div>
 
-  <!-- Results action bar (shown after jump or skip) -->
-  <div class="results-bar" id="resultsBar" hidden>
-    <span class="results-bar__info" id="jumpResultInfo"></span>
-    <div class="results-bar__actions">
-      <!-- Live camera status chip -->
-      <span class="camera-chip" id="cameraChip" hidden>
-        <span class="camera-chip__dot"></span>
-        <span id="cameraChipText">Jump!</span>
-      </span>
-      <button type="button" class="results-bar__btn" id="jumpAgainBtn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M21 3v5h-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Recalibrate
-      </button>
-    </div>
+  <!-- Status bar -->
+  <div class="status-bar" id="resultsBar">
+    <span class="status-bar__info" id="jumpResultInfo">Jump in front of the camera — astronauts will follow</span>
   </div>
 
-  <!-- ── Camera stage ─────────────────────────────────────────────────── -->
-  <div class="camera-stage" id="cameraStage" hidden>
-
-    <!-- Step 1: Setup card -->
-    <div class="camera-setup-card" id="cameraSetupCard">
-      <p class="camera-setup__eyebrow">Get started</p>
-      <h2 class="camera-setup__title">Set up your camera</h2>
-      <ul class="camera-setup__tips">
-        <li>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
-            <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.75"/>
-          </svg>
-          Stand 2–3 m from the camera, full body visible
-        </li>
-        <li>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.75"/>
-            <path d="M12 2v2m0 16v2M2 12h2m16 0h2" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
-          </svg>
-          Face a bright light or window
-        </li>
-        <li>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.75"/>
-            <path d="M8 21h8m-4-4v4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
-          </svg>
-          Keep the camera stable on a table or mount
-        </li>
-      </ul>
-
-      <p class="camera-setup__error" id="cameraPermError" hidden></p>
-
-      <div class="camera-setup__actions">
-        <button type="button" class="btn-primary" id="cameraStartBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.87v6.26a1 1 0 0 1-1.447.94L15 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-            <rect x="3" y="8" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.75"/>
-          </svg>
-          Enable camera
-        </button>
-        <button type="button" class="btn-text" id="skipCameraBtn">
-          Skip — try demo (0.5 m jump)
-        </button>
-      </div>
-    </div>
-
-    <!-- Step 2: Live camera + jump capture -->
-    <div class="camera-live" id="cameraLiveView" hidden>
-      <div class="camera-live__media">
-        <video id="poseVideo" class="camera-live__video" playsinline muted autoplay></video>
-        <canvas id="poseCanvas" class="camera-live__canvas"></canvas>
-      </div>
-
-      <div class="camera-live__hud">
-        <div class="camera-live__phase" id="jumpPhaseLabel">Starting…</div>
-        <div class="camera-live__hint" id="jumpCountdown" hidden></div>
-      </div>
-
-      <button type="button" class="btn-text camera-live__skip" id="skipLiveBtn">
-        Skip — try demo
-      </button>
-    </div>
-  </div>
-
-  <!-- ── 4-world panels ────────────────────────────────────────────────── -->
-  <main class="panels" id="panels" hidden>
+  <!-- ── 4-world panels (always visible) ─────────────────────────────── -->
+  <main class="panels" id="panels">
 
     <section class="panel panel--earth" data-body="earth">
       <div class="panel__bg" aria-hidden="true">
@@ -291,6 +212,36 @@
     </section>
 
   </main>
+
+  <!-- ── Camera picture-in-picture ─────────────────────────────────────── -->
+  <aside class="camera-pip" id="cameraPip" aria-label="Your camera">
+    <div class="camera-pip__header">
+      <span class="camera-pip__label">You</span>
+      <span class="camera-pip__phase" id="jumpPhaseLabel">Enable camera</span>
+    </div>
+    <div class="camera-pip__media">
+      <video id="poseVideo" class="camera-pip__video" playsinline muted autoplay></video>
+      <canvas id="poseCanvas" class="camera-pip__canvas"></canvas>
+      <div class="camera-pip__overlay" id="cameraOverlay">
+        <button type="button" class="camera-pip__enable" id="cameraStartBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.87v6.26a1 1 0 0 1-1.447.94L15 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="3" y="8" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.75"/>
+          </svg>
+          Enable camera
+        </button>
+        <p class="camera-pip__error" id="cameraPermError" hidden></p>
+      </div>
+    </div>
+    <div class="camera-pip__footer">
+      <button type="button" class="camera-pip__retry" id="jumpAgainBtn" hidden title="Recalibrate baseline">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M21 3v5h-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </aside>
 
   <!-- ── About modal ───────────────────────────────────────────────────── -->
   <dialog class="modal modal--about" id="aboutModal">
