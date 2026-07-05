@@ -17,81 +17,67 @@ import { JumpTracker, JT_STATE } from "./jumpTracker.js";
 
 // ── Flow states ───────────────────────────────────────────────────────────────
 const FLOW = {
-  MASS: "mass",
-  CAMERA_SETUP: "camera-setup",
-  JUMP_CAPTURE: "jump-capture",
-  RESULTS: "results",
+  MASS:    "mass",
+  SETUP:   "setup",   // camera tips + permission
+  LIVE:    "live",    // baseline calibration (full-screen camera)
+  RESULTS: "results", // panels shown, camera running in background
 };
 
 let flow = FLOW.MASS;
-let currentMassKg = null;
-let currentHeightCm = 170;
-let measuredJumpM = null;    // null = use estimated fallback
-let animFrameId = null;
+let currentMassKg  = null;
+let lastJumpM      = null;   // most recently measured Earth jump
+let animFrameId    = null;
 
-// ── URL params ─────────────────────────────────────────────────────────────
+// ── URL params ────────────────────────────────────────────────────────────────
 const params = new URLSearchParams(location.search);
 const SCALE_UI_ENABLED = params.get("scale") === "auto";
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
-const massModal      = document.getElementById("weightModal");
-const massForm       = document.getElementById("weightForm");
-const massInput      = document.getElementById("weightInput");
-const heightInput    = document.getElementById("heightInput");
-const massError      = document.getElementById("weightError");
-const cameraStage    = document.getElementById("cameraStage");
-const cameraSetupCard= document.getElementById("cameraSetupCard");
-const cameraLiveView = document.getElementById("cameraLiveView");
-const videoEl        = document.getElementById("poseVideo");
-const canvasEl       = document.getElementById("poseCanvas");
-const jumpPhaseLabel = document.getElementById("jumpPhaseLabel");
-const jumpCountdown  = document.getElementById("jumpCountdown");
-const cameraStartBtn = document.getElementById("cameraStartBtn");
-const skipCameraBtn  = document.getElementById("skipCameraBtn");
-const skipLiveBtn    = document.getElementById("skipLiveBtn");
-const cameraBackBtn  = document.getElementById("cameraBackBtn");
-const cameraErrEl    = document.getElementById("cameraPermError");
-const panelsEl       = document.getElementById("panels");
-const resultsBar     = document.getElementById("resultsBar");
-const jumpAgainBtn   = document.getElementById("jumpAgainBtn");
-const changeMassBtn  = document.getElementById("changeMassBtn");
-const jumpResultInfo = document.getElementById("jumpResultInfo");
-const settingsModal  = document.getElementById("settingsModal");
-const aboutModal     = document.getElementById("aboutModal");
-const settingsBtn    = document.getElementById("settingsBtn");
-const aboutBtn       = document.getElementById("aboutBtn");
-const settingsCloseBtn = document.getElementById("settingsCloseBtn");
-const aboutCloseBtn    = document.getElementById("aboutCloseBtn");
-const changeWeightBtn  = document.getElementById("changeWeightBtn");
-const exhibitBanner    = document.getElementById("exhibitBanner");
-// Scale UI (only relevant in exhibit mode)
-const scaleDot       = document.getElementById("scaleDot");
-const scaleStatus    = document.getElementById("scaleStatus");
-const scaleLiveKg    = document.getElementById("scaleLiveKg");
-const scaleConnectBtn= document.getElementById("scaleConnectBtn");
-const scaleTareBtn   = document.getElementById("scaleTareBtn");
-const scaleResetBtn  = document.getElementById("scaleResetBtn");
-const modalModes     = document.getElementById("modalModes");
-const modeScaleBtn   = document.getElementById("modeScaleBtn");
-const modeManualBtn  = document.getElementById("modeManualBtn");
-
-// ── Phase label helpers ────────────────────────────────────────────────────────
-const JUMP_PHASE_TEXT = {
-  [JT_STATE.BASELINE]: "Stand still…",
-  [JT_STATE.READY]:    "JUMP!",
-  [JT_STATE.JUMPING]:  "In the air!",
-  [JT_STATE.DONE]:     "Got it!",
-};
+const massModal       = document.getElementById("weightModal");
+const massForm        = document.getElementById("weightForm");
+const massInput       = document.getElementById("weightInput");
+const massError       = document.getElementById("weightError");
+const cameraStage     = document.getElementById("cameraStage");
+const cameraSetupCard = document.getElementById("cameraSetupCard");
+const cameraLiveView  = document.getElementById("cameraLiveView");
+const videoEl         = document.getElementById("poseVideo");
+const canvasEl        = document.getElementById("poseCanvas");
+const jumpPhaseLabel  = document.getElementById("jumpPhaseLabel");
+const jumpCountdown   = document.getElementById("jumpCountdown");
+const cameraStartBtn  = document.getElementById("cameraStartBtn");
+const skipCameraBtn   = document.getElementById("skipCameraBtn");
+const skipLiveBtn     = document.getElementById("skipLiveBtn");
+const cameraBackBtn   = document.getElementById("cameraBackBtn");
+const cameraErrEl     = document.getElementById("cameraPermError");
+const panelsEl        = document.getElementById("panels");
+const resultsBar      = document.getElementById("resultsBar");
+const jumpAgainBtn    = document.getElementById("jumpAgainBtn");
+const changeMassBtn   = document.getElementById("changeMassBtn");
+const jumpResultInfo  = document.getElementById("jumpResultInfo");
+const cameraChip      = document.getElementById("cameraChip");
+const cameraChipText  = document.getElementById("cameraChipText");
+const settingsModal   = document.getElementById("settingsModal");
+const aboutModal      = document.getElementById("aboutModal");
+const settingsBtn     = document.getElementById("settingsBtn");
+const aboutBtn        = document.getElementById("aboutBtn");
+const settingsCloseBtn  = document.getElementById("settingsCloseBtn");
+const aboutCloseBtn     = document.getElementById("aboutCloseBtn");
+const changeWeightBtn   = document.getElementById("changeWeightBtn");
+const exhibitBanner     = document.getElementById("exhibitBanner");
+// Scale UI (exhibit mode only)
+const scaleDot        = document.getElementById("scaleDot");
+const scaleStatus     = document.getElementById("scaleStatus");
+const scaleLiveKg     = document.getElementById("scaleLiveKg");
+const scaleConnectBtn = document.getElementById("scaleConnectBtn");
+const scaleTareBtn    = document.getElementById("scaleTareBtn");
+const scaleResetBtn   = document.getElementById("scaleResetBtn");
+const modalModes      = document.getElementById("modalModes");
+const modeScaleBtn    = document.getElementById("modeScaleBtn");
 
 // ── Validation ────────────────────────────────────────────────────────────────
 function validateMass(v) {
   const n = Number(v);
   return Number.isFinite(n) && n >= MASS_MIN && n <= MASS_MAX;
-}
-
-function validateHeight(v) {
-  const n = Number(v);
-  return Number.isFinite(n) && n >= 50 && n <= 280;
 }
 
 // ── Panel rendering ────────────────────────────────────────────────────────────
@@ -105,182 +91,258 @@ function buildMeterLabels(container, meterMax) {
 }
 
 function updateJumpMeter(panel, heightM, meterMax) {
-  const pct = Math.min((heightM / meterMax) * 100, 100);
-  const fill = panel.querySelector("[data-jump-fill]");
-  const cap = panel.querySelector("[data-jump-cap]");
-  const display = panel.querySelector("[data-jump-display]");
+  const pct  = Math.min((heightM / meterMax) * 100, 100);
+  const fill  = panel.querySelector("[data-jump-fill]");
+  const cap   = panel.querySelector("[data-jump-cap]");
+  const disp  = panel.querySelector("[data-jump-display]");
   if (fill) fill.style.height = `${pct}%`;
-  if (cap) cap.style.bottom = `${pct}%`;
-  if (display) display.textContent = formatMeters(heightM);
+  if (cap)  cap.style.bottom  = `${pct}%`;
+  if (disp) disp.textContent  = formatMeters(heightM);
 }
 
-function jumpNote(body, jumpM, earthJumpM) {
-  if (body === "earth") {
-    const suffix = measuredJumpM ? " (measured)" : " (estimated)";
-    return `${formatMeters(jumpM)} m on Earth` + suffix;
-  }
-  if (body === "pluto") return "Highest jump — weakest gravity!";
-  const times = (jumpM / earthJumpM).toFixed(1);
-  return `${times}× your Earth jump`;
-}
-
-/** Update hop animation height and duration via CSS custom properties. */
-function setHopCSS(panel, body, earthJumpM, g) {
-  const worldJump = jumpOnWorld(earthJumpM, g);
-  // Scale factor: Earth 0.5 m ≈ 15 px; cap Pluto/Moon so they stay in frame
+/**
+ * Compute and apply the CSS hop variables for each panel.
+ * px scale: Earth 0.5 m ≈ 15 px, capped at 240 px so Pluto stays in frame.
+ * Duration is physics-derived: t = 2 × √(2h / g), capped at 6 s.
+ */
+function setHopCSS(panel, body, worldJumpM, g) {
   const BASE_PX = 15;
   const BASE_M  = 0.5;
-  const hopPx   = Math.min(Math.round((worldJump / BASE_M) * BASE_PX), 240);
-  const durations = { earth: 1.55, moon: 3.8, mars: 2.35, pluto: 5.5 };
+  const hopPx = Math.min(Math.round((worldJumpM / BASE_M) * BASE_PX), 240);
+  const hopDuration = Math.min(2 * Math.sqrt((2 * worldJumpM) / g), 6);
   panel.style.setProperty("--hop-px", `${hopPx}px`);
-  panel.style.setProperty("--hop-duration", `${durations[body] ?? 2}s`);
+  panel.style.setProperty("--hop-duration", `${hopDuration.toFixed(2)}s`);
 }
 
+/** Update all four panels with a given Earth jump height. */
 function applySimulation(massKg, earthJump) {
   const earthForce = weightInNewtons(massKg, GRAVITY.earth);
-  const jumps = Object.entries(GRAVITY).map(([, g]) => jumpOnWorld(earthJump, g));
-  const meterMax = meterMaxFor(jumps);
-  const massText = formatMass(massKg);
+  const worldJumps = Object.entries(GRAVITY).map(([, g]) => jumpOnWorld(earthJump, g));
+  const meterMax   = meterMaxFor(worldJumps);
+  const massText   = formatMass(massKg);
 
-  Object.entries(GRAVITY).forEach(([body, g]) => {
+  Object.entries(GRAVITY).forEach(([body, g], i) => {
     const panel = document.querySelector(`.panel[data-body="${body}"]`);
     if (!panel) return;
 
-    const jumpM = jumpOnWorld(earthJump, g);
-    panel.querySelector("[data-mass-display]").textContent = massText;
+    const worldJumpM = worldJumps[i];
+
+    panel.querySelector("[data-mass-display]").textContent   = massText;
     panel.querySelector("[data-weight-display]").textContent = formatNewtons(weightInNewtons(massKg, g));
+
+    const ratio = weightInNewtons(massKg, g) / earthForce;
     panel.querySelector("[data-compare-display]").textContent =
-      body === "earth" ? "Reference" : `${Math.round((weightInNewtons(massKg, g) / earthForce) * 100)}% of Earth`;
+      body === "earth" ? "Reference" : `${Math.round(ratio * 100)}% of Earth`;
 
     const labels = panel.querySelector("[data-meter-labels]");
     if (labels) buildMeterLabels(labels, meterMax);
-    updateJumpMeter(panel, jumpM, meterMax);
+    updateJumpMeter(panel, worldJumpM, meterMax);
 
     const noteEl = panel.querySelector("[data-jump-note]");
-    if (noteEl) noteEl.textContent = jumpNote(body, jumpM, earthJump);
+    if (noteEl) {
+      if (body === "earth") {
+        noteEl.textContent = lastJumpM
+          ? `Your jump: ${formatMeters(worldJumpM)} m`
+          : `Estimated: ${formatMeters(worldJumpM)} m`;
+      } else {
+        noteEl.textContent = `${(worldJumpM / earthJump).toFixed(1)}× your Earth jump`;
+      }
+    }
 
-    setHopCSS(panel, body, earthJump, g);
+    setHopCSS(panel, body, worldJumpM, g);
   });
 
   panelsEl.hidden = false;
   exhibitBanner.hidden = true;
 }
 
+// ── Jump animation trigger (fires every time a jump is detected) ──────────────
+const allAstronauts = () => document.querySelectorAll(".panel[data-body] .astronaut");
+const allShadows    = () => document.querySelectorAll(".panel[data-body] .shadow");
+
+function triggerJumpAnimation() {
+  allAstronauts().forEach((el) => {
+    el.classList.remove("is-hopping");
+    void el.offsetWidth; // force reflow to restart animation
+    el.classList.add("is-hopping");
+  });
+  allShadows().forEach((el) => {
+    el.classList.remove("is-hopping");
+    void el.offsetWidth;
+    el.classList.add("is-hopping");
+  });
+}
+
+// Remove hopping class after animation ends
+document.addEventListener("animationend", (e) => {
+  if (e.target.classList.contains("is-hopping")) {
+    e.target.classList.remove("is-hopping");
+  }
+});
+
+// ── Camera chip status (shown during RESULTS + live camera) ──────────────────
+function setChipText(text, active = false) {
+  if (!cameraChip) return;
+  cameraChip.hidden = false;
+  if (cameraChipText) cameraChipText.textContent = text;
+  cameraChip.classList.toggle("camera-chip--active", active);
+}
+
 // ── Flow transitions ──────────────────────────────────────────────────────────
 function goToMass() {
   flow = FLOW.MASS;
   cameraStage.hidden = true;
-  panelsEl.hidden = true;
-  resultsBar.hidden = true;
+  panelsEl.hidden    = true;
+  resultsBar.hidden  = true;
+  if (cameraChip) cameraChip.hidden = true;
   stopCamera();
   massModal.showModal();
-  requestAnimationFrame(() => {
-    massInput.focus();
-    massInput.select();
-  });
+  requestAnimationFrame(() => { massInput.focus(); massInput.select(); });
 }
 
-function goToCameraSetup() {
-  flow = FLOW.CAMERA_SETUP;
+function goToSetup() {
+  flow = FLOW.SETUP;
   massModal.close();
-  cameraStage.hidden = false;
+  cameraStage.hidden    = false;
   cameraSetupCard.hidden = false;
   cameraLiveView.hidden = true;
   if (cameraErrEl) cameraErrEl.hidden = true;
-
-  if (!Camera.isSupported()) {
-    showCameraError("Camera not available in this browser.");
-  }
 }
 
-async function goToJumpCapture() {
-  flow = FLOW.JUMP_CAPTURE;
+async function goToLive() {
+  flow = FLOW.LIVE;
   cameraSetupCard.hidden = true;
-  cameraLiveView.hidden = false;
+  cameraLiveView.hidden  = false;
   jumpPhaseLabel.textContent = "Starting camera…";
   jumpCountdown.hidden = true;
 
   try {
     await Camera.start(videoEl);
     await PoseDetector.init();
-    startJumpTracking();
+    startTracking();
   } catch (err) {
-    if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-      showCameraError("Camera access was denied. Allow camera access in your browser and try again.");
-    } else {
-      showCameraError(`Could not start camera: ${err.message}`);
+    const denied = err.name === "NotAllowedError" || err.name === "PermissionDeniedError";
+    if (cameraErrEl) {
+      cameraErrEl.textContent = denied
+        ? "Camera access denied. Allow camera access in your browser and try again."
+        : `Could not start camera: ${err.message}`;
+      cameraErrEl.hidden = false;
     }
     cameraSetupCard.hidden = false;
-    cameraLiveView.hidden = true;
-    flow = FLOW.CAMERA_SETUP;
+    cameraLiveView.hidden  = true;
+    flow = FLOW.SETUP;
   }
 }
 
-function showCameraError(msg) {
-  if (!cameraErrEl) return;
-  cameraErrEl.textContent = msg;
-  cameraErrEl.hidden = false;
-}
-
-function skipCamera() {
-  measuredJumpM = null;
-  stopCamera();
-  goToResults();
-}
-
-function goToResults() {
-  flow = FLOW.RESULTS;
-  stopCamera();
-  cameraStage.hidden = true;
-  massModal.close();
-
-  const earthJump = measuredJumpM ?? estimatedEarthJump(currentMassKg);
-  applySimulation(currentMassKg, earthJump);
-
-  resultsBar.hidden = false;
-  if (jumpResultInfo) {
-    jumpResultInfo.textContent = measuredJumpM
-      ? `Your Earth jump: ${formatMeters(measuredJumpM)} m (measured)`
-      : `Estimated for ${formatMass(currentMassKg)} kg`;
-  }
-}
-
-// ── Jump tracking loop ─────────────────────────────────────────────────────────
-function startJumpTracking() {
+/** Jump tracking started once camera is live. */
+function startTracking() {
   JumpTracker.onStateChange = (state) => {
-    const text = JUMP_PHASE_TEXT[state] ?? "";
-    jumpPhaseLabel.textContent = text;
+    if (flow === FLOW.LIVE) {
+      // Show calibration UI in the full-screen view
+      const text = {
+        [JT_STATE.BASELINE]: "Stand still…",
+        [JT_STATE.READY]:    "JUMP!",
+        [JT_STATE.JUMPING]:  "In the air!",
+        [JT_STATE.DONE]:     "Got it!",
+      }[state] ?? "";
+      jumpPhaseLabel.textContent = text;
+      jumpPhaseLabel.classList.toggle("camera-phase--ready", state === JT_STATE.READY);
 
-    if (state === JT_STATE.BASELINE) {
-      jumpCountdown.hidden = false;
-      jumpCountdown.textContent = "Getting baseline…";
-    } else if (state === JT_STATE.READY) {
-      jumpCountdown.hidden = false;
-      jumpCountdown.textContent = "Jump when ready!";
-      jumpPhaseLabel.classList.add("camera-phase--ready");
-    } else {
-      jumpCountdown.hidden = true;
-      jumpPhaseLabel.classList.remove("camera-phase--ready");
+      if (state === JT_STATE.BASELINE) {
+        jumpCountdown.hidden = false;
+        jumpCountdown.textContent = "Getting baseline…";
+      } else if (state === JT_STATE.READY) {
+        jumpCountdown.hidden = false;
+        jumpCountdown.textContent = "Jump when ready!";
+      } else {
+        jumpCountdown.hidden = true;
+      }
+
+      // When baseline is set, transition to results so panels are visible
+      if (state === JT_STATE.READY && flow === FLOW.LIVE) {
+        goToResults();
+      }
+    } else if (flow === FLOW.RESULTS) {
+      // Update the small chip in the results bar
+      const chipText = {
+        [JT_STATE.READY]:   "Jump!",
+        [JT_STATE.JUMPING]: "In the air!",
+        [JT_STATE.DONE]:    "Got it!",
+        [JT_STATE.BASELINE]: "Calibrating…",
+      }[state];
+      if (chipText) setChipText(chipText, state === JT_STATE.JUMPING || state === JT_STATE.DONE);
     }
   };
 
   JumpTracker.onJumpCaptured = (jumpM) => {
-    measuredJumpM = jumpM;
-    jumpPhaseLabel.textContent = `Captured: ${formatMeters(jumpM)} m`;
-    cancelAnimationFrame(animFrameId);
-    // Brief pause so the user sees the "captured" state
-    setTimeout(() => goToResults(), 1200);
+    lastJumpM = jumpM;
+
+    // Update CSS hop heights for all panels (triggers proportional animation)
+    Object.entries(GRAVITY).forEach(([body, g]) => {
+      const panel = document.querySelector(`.panel[data-body="${body}"]`);
+      if (!panel) return;
+      const worldJump = jumpOnWorld(jumpM, g);
+      setHopCSS(panel, body, worldJump, g);
+
+      // Update jump display values
+      const noteEl = panel.querySelector("[data-jump-note]");
+      if (noteEl) {
+        noteEl.textContent = body === "earth"
+          ? `Your jump: ${formatMeters(jumpM)} m`
+          : `${(worldJump / jumpM).toFixed(1)}× your Earth jump`;
+      }
+      // Update meter fill
+      const worldJumps = Object.values(GRAVITY).map((gv) => jumpOnWorld(jumpM, gv));
+      const meterMax   = meterMaxFor(worldJumps);
+      updateJumpMeter(panel, worldJump, meterMax);
+      const labels = panel.querySelector("[data-meter-labels]");
+      if (labels) buildMeterLabels(labels, meterMax);
+    });
+
+    // Fire the animated hops
+    triggerJumpAnimation();
+
+    // Update results bar info
+    if (jumpResultInfo) jumpResultInfo.textContent = `Last jump: ${formatMeters(jumpM)} m on Earth`;
   };
 
-  JumpTracker.start(currentHeightCm);
+  JumpTracker.start(170); // height defaults to 170 cm
   renderLoop();
 }
 
 function renderLoop() {
   const landmarks = PoseDetector.detect(videoEl);
-  PoseDetector.drawSkeleton(canvasEl, videoEl, landmarks);
+  // Only draw skeleton while still in the LIVE calibration screen
+  if (flow === FLOW.LIVE) {
+    PoseDetector.drawSkeleton(canvasEl, videoEl, landmarks);
+  }
   JumpTracker.update(landmarks);
   animFrameId = requestAnimationFrame(renderLoop);
+}
+
+function goToResults() {
+  flow = FLOW.RESULTS;
+  cameraStage.hidden = true;   // hide full-screen view; render loop continues
+  massModal.close();
+
+  const earthJump = lastJumpM ?? estimatedEarthJump(currentMassKg);
+  applySimulation(currentMassKg, earthJump);
+
+  resultsBar.hidden = false;
+  if (jumpResultInfo) {
+    jumpResultInfo.textContent = lastJumpM
+      ? `Last jump: ${formatMeters(lastJumpM)} m on Earth`
+      : `Estimated for ${formatMass(currentMassKg)} kg — jump to measure!`;
+  }
+
+  // Show live camera chip only when camera is actually running
+  if (Camera.stream) setChipText("Jump!", false);
+}
+
+function skipCamera() {
+  lastJumpM = null;
+  stopCamera();
+  goToResults();
 }
 
 function stopCamera() {
@@ -288,56 +350,7 @@ function stopCamera() {
   animFrameId = null;
   Camera.stop();
   JumpTracker.reset();
-}
-
-// ── Scale exhibit mode ────────────────────────────────────────────────────────
-async function initScaleMode() {
-  const { ScaleClient } = await import("../scale.js");
-
-  if (modeScaleBtn) {
-    modeScaleBtn.disabled = false;
-    modeScaleBtn.removeAttribute("aria-disabled");
-  }
-  if (modalModes) modalModes.hidden = false;
-
-  ScaleClient.on("status", (msg) => {
-    if (!scaleDot) return;
-    scaleDot.dataset.state = msg.state === "live" ? "live"
-      : msg.state === "connecting" ? "connecting"
-      : msg.state === "error" ? "error" : "offline";
-    if (scaleStatus && msg.state) {
-      const labels = { live: "Scale connected", connecting: "Connecting…", error: "Connection error", offline: "Scale offline", disconnected: "Scale disconnected — retrying…" };
-      scaleStatus.textContent = labels[msg.state] ?? msg.state;
-    }
-    if (scaleTareBtn) scaleTareBtn.hidden = msg.state !== "live";
-    if (scaleResetBtn) scaleResetBtn.hidden = msg.state !== "live";
-    if (msg.state === "live" && exhibitBanner) exhibitBanner.hidden = false;
-  });
-
-  ScaleClient.on("weight", (msg) => {
-    if (msg.kg != null) {
-      const t = Number.isFinite(msg.kg) ? msg.kg.toFixed(1) : "—";
-      if (scaleLiveKg) scaleLiveKg.textContent = `${t} kg`;
-    }
-  });
-
-  ScaleClient.on("capture", (msg) => {
-    if (!validateMass(msg.massKg)) return;
-    currentMassKg = msg.massKg;
-    measuredJumpM = null;
-    goToResults();
-    ScaleClient.reset();
-  });
-
-  if (scaleConnectBtn) scaleConnectBtn.addEventListener("click", () => {
-    const url = params.get("scale") || localStorage.getItem("scaleUrl") || "ws://192.168.4.1:81/";
-    ScaleClient.connect(url);
-  });
-  if (scaleTareBtn)  scaleTareBtn.addEventListener("click",  () => ScaleClient.tare());
-  if (scaleResetBtn) scaleResetBtn.addEventListener("click", () => ScaleClient.reset());
-
-  const url = params.get("scale") || "ws://192.168.4.1:81/";
-  ScaleClient.connect(url);
+  if (cameraChip) cameraChip.hidden = true;
 }
 
 // ── Event listeners ───────────────────────────────────────────────────────────
@@ -349,13 +362,9 @@ massForm.addEventListener("submit", (e) => {
     massInput.select();
     return;
   }
-  massError.hidden = true;
-  currentMassKg = Number(massInput.value);
-  currentHeightCm = validateHeight(heightInput?.value)
-    ? Number(heightInput.value)
-    : 170;
-
-  goToCameraSetup();
+  massError.hidden  = true;
+  currentMassKg     = Number(massInput.value);
+  goToSetup();
 });
 
 massInput.addEventListener("input", () => {
@@ -366,46 +375,79 @@ massModal.addEventListener("cancel", (e) => {
   if (panelsEl.hidden) e.preventDefault();
 });
 
-cameraStartBtn?.addEventListener("click", () => goToJumpCapture());
-skipCameraBtn?.addEventListener("click", () => skipCamera());
-skipLiveBtn?.addEventListener("click", () => skipCamera());
-cameraBackBtn?.addEventListener("click", () => {
-  stopCamera();
-  cameraStage.hidden = true;
-  goToMass();
-});
+cameraStartBtn?.addEventListener("click", () => goToLive());
+skipCameraBtn?.addEventListener("click",  () => skipCamera());
+skipLiveBtn?.addEventListener("click",    () => skipCamera());
+cameraBackBtn?.addEventListener("click",  () => { stopCamera(); goToMass(); });
 
 jumpAgainBtn?.addEventListener("click", () => {
-  panelsEl.hidden = true;
-  resultsBar.hidden = true;
-  cameraStage.hidden = false;
-  cameraSetupCard.hidden = false;
-  cameraLiveView.hidden = true;
-  if (cameraErrEl) cameraErrEl.hidden = true;
-  flow = FLOW.CAMERA_SETUP;
+  // Re-run baseline so camera is active again in a corner-chip style
+  if (!Camera.stream) {
+    // Camera was stopped — go back to setup
+    panelsEl.hidden   = true;
+    resultsBar.hidden = true;
+    cameraStage.hidden     = false;
+    cameraSetupCard.hidden = false;
+    cameraLiveView.hidden  = true;
+    if (cameraErrEl) cameraErrEl.hidden = true;
+    flow = FLOW.SETUP;
+  } else {
+    // Camera already running — just restart baseline
+    JumpTracker.start(170);
+    setChipText("Stand still…", false);
+  }
 });
 
-changeMassBtn?.addEventListener("click", () => {
-  panelsEl.hidden = true;
-  resultsBar.hidden = true;
-  goToMass();
-});
+changeMassBtn?.addEventListener("click",  () => { stopCamera(); goToMass(); });
+changeWeightBtn?.addEventListener("click", () => { settingsModal.close(); stopCamera(); goToMass(); });
 
-changeWeightBtn?.addEventListener("click", () => {
-  settingsModal.close();
-  panelsEl.hidden = true;
-  resultsBar.hidden = true;
-  goToMass();
-});
+settingsBtn?.addEventListener("click",     () => settingsModal.showModal());
+aboutBtn?.addEventListener("click",        () => aboutModal.showModal());
+settingsCloseBtn?.addEventListener("click",() => settingsModal.close());
+aboutCloseBtn?.addEventListener("click",   () => aboutModal.close());
 
-settingsBtn?.addEventListener("click", () => settingsModal.showModal());
-aboutBtn?.addEventListener("click",    () => aboutModal.showModal());
-settingsCloseBtn?.addEventListener("click", () => settingsModal.close());
-aboutCloseBtn?.addEventListener("click",    () => aboutModal.close());
+// ── Scale exhibit mode ────────────────────────────────────────────────────────
+async function initScaleMode() {
+  const { ScaleClient } = await import("../scale.js");
+  if (modeScaleBtn)  { modeScaleBtn.disabled = false; modeScaleBtn.removeAttribute("aria-disabled"); }
+  if (modalModes)    modalModes.hidden = false;
 
-// ── Boot ──────────────────────────────────────────────────────────────────────
-if (SCALE_UI_ENABLED) {
-  initScaleMode();
+  ScaleClient.on("status", (msg) => {
+    if (!scaleDot) return;
+    scaleDot.dataset.state = { live: "live", connecting: "connecting", error: "error" }[msg.state] ?? "offline";
+    if (scaleStatus) {
+      scaleStatus.textContent = { live: "Scale connected", connecting: "Connecting…", error: "Connection error",
+        offline: "Scale offline", disconnected: "Scale disconnected — retrying…" }[msg.state] ?? msg.state;
+    }
+    if (scaleTareBtn)  scaleTareBtn.hidden  = msg.state !== "live";
+    if (scaleResetBtn) scaleResetBtn.hidden = msg.state !== "live";
+    if (msg.state === "live" && exhibitBanner) exhibitBanner.hidden = false;
+  });
+
+  ScaleClient.on("weight", (msg) => {
+    if (msg.kg != null && scaleLiveKg) {
+      scaleLiveKg.textContent = `${Number.isFinite(msg.kg) ? msg.kg.toFixed(1) : "—"} kg`;
+    }
+  });
+
+  ScaleClient.on("capture", (msg) => {
+    if (!validateMass(msg.massKg)) return;
+    currentMassKg = msg.massKg;
+    lastJumpM = null;
+    goToResults();
+    ScaleClient.reset();
+  });
+
+  scaleConnectBtn?.addEventListener("click", () => {
+    const url = params.get("scale") || localStorage.getItem("scaleUrl") || "ws://192.168.4.1:81/";
+    ScaleClient.connect(url);
+  });
+  scaleTareBtn?.addEventListener("click",  () => ScaleClient.tare());
+  scaleResetBtn?.addEventListener("click", () => ScaleClient.reset());
+
+  ScaleClient.connect(params.get("scale") || "ws://192.168.4.1:81/");
 }
 
+// ── Boot ──────────────────────────────────────────────────────────────────────
+if (SCALE_UI_ENABLED) initScaleMode();
 goToMass();

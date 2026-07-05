@@ -42,12 +42,17 @@
   <div class="results-bar" id="resultsBar" hidden>
     <span class="results-bar__info" id="jumpResultInfo"></span>
     <div class="results-bar__actions">
+      <!-- Live camera status chip -->
+      <span class="camera-chip" id="cameraChip" hidden>
+        <span class="camera-chip__dot"></span>
+        <span id="cameraChipText">Jump!</span>
+      </span>
       <button type="button" class="results-bar__btn" id="jumpAgainBtn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.75"/>
-          <path d="M8 12.5 11 15.5 16 9" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M21 3v5h-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Jump again
+        Retry
       </button>
       <button type="button" class="results-bar__btn results-bar__btn--ghost" id="changeMassBtn">Change mass</button>
     </div>
@@ -309,8 +314,8 @@
   <dialog class="modal" id="weightModal">
     <form method="dialog" class="modal__form modal__form--weight" id="weightForm">
       <p class="modal__eyebrow">Get started</p>
-      <h2 class="modal__title">About you</h2>
-      <p class="modal__hint">We'll measure your jump with the camera, then show your weight and jump height across four worlds.</p>
+      <h2 class="modal__title">What's your mass?</h2>
+      <p class="modal__hint">Enter your body mass in kg. Then we'll use the camera to measure your real jump on Earth and show how high you'd go on the Moon, Mars, and Pluto.</p>
 
       <!-- Scale toggle (hidden unless ?scale=auto) -->
       <div class="modal__modes" id="modalModes" hidden>
@@ -321,52 +326,26 @@
       </div>
 
       <div id="modalManualPanel">
-        <div class="modal__field-row">
-          <div class="modal__field">
-            <label class="modal__label" for="weightInput">Mass</label>
-            <div class="modal__input-row">
-              <input
-                type="number"
-                id="weightInput"
-                class="modal__input"
-                min="1"
-                max="300"
-                step="0.1"
-                inputmode="decimal"
-                placeholder="70"
-                value="70"
-                autocomplete="off"
-                enterkeyhint="go"
-                aria-describedby="weightRangeHint"
-              />
-              <span class="modal__suffix modal__suffix--input">kg</span>
-            </div>
-          </div>
-
-          <div class="modal__field">
-            <label class="modal__label" for="heightInput">
-              Height
-              <span class="modal__label-optional">(optional)</span>
-            </label>
-            <div class="modal__input-row">
-              <input
-                type="number"
-                id="heightInput"
-                class="modal__input"
-                min="50"
-                max="280"
-                step="1"
-                inputmode="decimal"
-                placeholder="170"
-                value="170"
-                autocomplete="off"
-              />
-              <span class="modal__suffix modal__suffix--input">cm</span>
-            </div>
-          </div>
+        <label class="modal__label" for="weightInput">Your mass</label>
+        <div class="modal__input-row">
+          <input
+            type="number"
+            id="weightInput"
+            class="modal__input"
+            min="1"
+            max="300"
+            step="0.1"
+            inputmode="decimal"
+            placeholder="70"
+            value="70"
+            autocomplete="off"
+            enterkeyhint="go"
+            aria-describedby="weightRangeHint"
+          />
+          <span class="modal__suffix modal__suffix--input">kg</span>
         </div>
 
-        <p class="modal__range-hint" id="weightRangeHint">Mass: 1–300 kg · Height used to calibrate jump measurement</p>
+        <p class="modal__range-hint" id="weightRangeHint">Between 1 and 300 kg</p>
         <p class="modal__error" id="weightError" hidden>Please enter a mass between 1 and 300 kg.</p>
 
         <button type="submit" class="btn-primary">

@@ -1014,18 +1014,25 @@ body {
 
 /* —— CSS-variable-driven universal hop animation —— */
 
-/* Default hop heights per world (updated by JS after jump capture) */
-.panel[data-body="earth"]  { --hop-px: 15px;  --hop-duration: 1.55s; --shadow-min-scale: 0.75; --shadow-opacity: 0.55; }
-.panel[data-body="moon"]   { --hop-px: 90px;  --hop-duration: 3.8s;  --shadow-min-scale: 0.24; --shadow-opacity: 0.4;  }
-.panel[data-body="mars"]   { --hop-px: 40px;  --hop-duration: 2.35s; --shadow-min-scale: 0.48; --shadow-opacity: 0.48; }
-.panel[data-body="pluto"]  { --hop-px: 235px; --hop-duration: 5.5s;  --shadow-min-scale: 0.12; --shadow-opacity: 0.35; }
+/* Default hop heights per world (updated by JS each time a jump is captured) */
+.panel[data-body="earth"]  { --hop-px: 15px;  --hop-duration: 0.64s; --shadow-min-scale: 0.75; --shadow-opacity: 0.55; }
+.panel[data-body="moon"]   { --hop-px: 90px;  --hop-duration: 3.85s; --shadow-min-scale: 0.24; --shadow-opacity: 0.4;  }
+.panel[data-body="mars"]   { --hop-px: 40px;  --hop-duration: 1.67s; --shadow-min-scale: 0.48; --shadow-opacity: 0.48; }
+.panel[data-body="pluto"]  { --hop-px: 235px; --hop-duration: 6s;    --shadow-min-scale: 0.12; --shadow-opacity: 0.35; }
 
-.panel[data-body] .astronaut {
-  animation: hop-universal var(--hop-duration) infinite;
+/* Astronaut sits idle on the ground by default */
+.panel[data-body] .astronaut,
+.panel[data-body] .shadow {
+  animation: none;
 }
 
-.panel[data-body] .shadow {
-  animation: shadow-universal var(--hop-duration) infinite;
+/* Triggered once per detected jump */
+.panel[data-body] .astronaut.is-hopping {
+  animation: hop-universal var(--hop-duration) cubic-bezier(0.33, 0, 0.5, 1) 1 normal both;
+}
+
+.panel[data-body] .shadow.is-hopping {
+  animation: shadow-universal var(--hop-duration) cubic-bezier(0.33, 0, 0.5, 1) 1 normal both;
 }
 
 @keyframes hop-universal {
@@ -2096,4 +2103,45 @@ body {
     border-radius: 16px;
     padding: 1.25rem 1rem;
   }
+}
+
+/* ── Camera live chip (shown in results bar while camera is running) ── */
+
+.camera-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.7rem 0.3rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(126, 200, 255, 0.1);
+  border: 1px solid rgba(126, 200, 255, 0.25);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: rgba(126, 200, 255, 0.85);
+  letter-spacing: 0.02em;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.camera-chip--active {
+  background: rgba(126, 200, 255, 0.18);
+  border-color: rgba(126, 200, 255, 0.5);
+  color: #9de0ff;
+}
+
+.camera-chip__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(126, 200, 255, 0.6);
+  animation: chip-pulse 1.8s ease infinite;
+  flex-shrink: 0;
+}
+
+.camera-chip--active .camera-chip__dot {
+  background: #7ec8ff;
+}
+
+@keyframes chip-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.75); }
 }

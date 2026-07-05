@@ -105,8 +105,13 @@ export const JumpTracker = {
         if (jumpM >= MIN_JUMP_M && jumpM <= MAX_JUMP_M) {
           this._setState(JT_STATE.DONE);
           if (this.onJumpCaptured) this.onJumpCaptured(jumpM);
+          // Auto-loop: reset for the next jump after a brief pause
+          setTimeout(() => {
+            this._peakHipY = this._baselineHipY;
+            this._setState(JT_STATE.READY);
+          }, 600);
         } else {
-          // Not a valid jump — go back to ready and try again
+          // Not a valid jump — go back to ready silently
           this._peakHipY = this._baselineHipY;
           this._setState(JT_STATE.READY);
         }
