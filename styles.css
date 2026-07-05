@@ -360,6 +360,24 @@ body {
   animation: impact-flash 0.6s ease-out;
 }
 
+.panel--live {
+  outline: 1px solid rgba(255, 180, 80, 0.45);
+  box-shadow:
+    0 0 24px rgba(255, 180, 80, 0.18),
+    inset 0 0 40px rgba(255, 180, 80, 0.04);
+}
+
+.panel--live .jump-meter__fill {
+  transition: height 0.08s linear !important;
+  box-shadow:
+    0 0 20px rgba(255, 200, 120, 0.5),
+    0 -2px 8px rgba(255, 255, 255, 0.5) inset !important;
+}
+
+.panel--live .jump-meter__value {
+  color: rgba(255, 210, 140, 0.95);
+}
+
 @keyframes impact-flash {
   0% { background: rgba(255, 180, 100, 0.35); }
   100% { background: transparent; }
@@ -1872,6 +1890,11 @@ body {
 .camera-pip__phase--ready {
   color: #9de0ff;
   animation: pip-pulse 0.6s ease infinite alternate;
+}
+
+.camera-pip__phase--jumping {
+  color: #ffb450;
+  animation: pip-pulse 0.25s ease infinite alternate;
 }
 
 @keyframes pip-pulse {

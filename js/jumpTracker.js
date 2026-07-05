@@ -10,8 +10,8 @@ const MAX_JUMP_M = 2.5;
 
 export const JT_STATE = {
   IDLE: "idle",
-  AWAITING: "awaiting",   // waiting for kid to step on the mark
-  BASELINE: "baseline",   // on mark, standing still
+  AWAITING: "awaiting",
+  BASELINE: "baseline",
   READY: "ready",
   JUMPING: "jumping",
   DONE: "done",
@@ -22,16 +22,19 @@ export const JumpTracker = {
 
   _baselineAnkleY: null,
   _peakAnkleY: null,
+  _currentAnkleY: null,
   _samples: [],
   _baselineStart: 0,
   _inZone: false,
 
   onStateChange: null,
   onJumpCaptured: null,
+  onLiveUpdate: null,
 
   start() {
     this._baselineAnkleY = null;
     this._peakAnkleY = null;
+    this._currentAnkleY = null;
     this._samples = [];
     this._baselineStart = 0;
     this._inZone = false;
@@ -42,6 +45,28 @@ export const JumpTracker = {
     this._setState(JT_STATE.IDLE);
   },
 
+  getLiveMetrics() {
+    const baselineProgress =
+      this.state === JT_STATE.BASELINE && this._baselineStart
+        ? Math.min(1, (performance.now() - this._baselineStart) / BASELINE_MS)
+        : this.state === JT_STATE.READY || this.state === JT_STATE.JUMPING ? 1 : 0;
+
+    let liveNormDelta = 0;
+    if (this._baselineAnkleY != null && this._currentAnkleY != null) {
+      liveNormDelta = Math.max(0, this._baselineAnkleY - this._currentAnkleY);
+    }
+
+    return {
+      state: this.state,
+      inZone: this._inZone,
+      liveNormDelta,
+      liveJumpM: liveNormDelta * EXHIBIT_M_PER_UNIT,
+      baselineProgress,
+      baselineAnkleY: this._baselineAnkleY,
+      currentAnkleY: this._currentAnkleY,
+    };
+  },
+
   update(landmarks) {
     if (!landmarks || this.state === JT_STATE.IDLE || this.state === JT_STATE.DONE)
       return;
@@ -49,6 +74,7 @@ export const JumpTracker = {
     const ankleY = this._avgAnkleY(landmarks);
     if (ankleY == null) return;
 
+    this._currentAnkleY = ankleY;
     const inZone = feetInZone(landmarks);
     this._inZone = inZone;
 
@@ -58,19 +84,22 @@ export const JumpTracker = {
         this._baselineStart = performance.now();
         this._setState(JT_STATE.BASELINE);
       }
+      this._emitLive();
       return;
     }
 
-    // Left the zone before jumping — reset
     if (!inZone && this.state !== JT_STATE.JUMPING) {
       this._samples = [];
+      this._baselineAnkleY = null;
       this._setState(JT_STATE.AWAITING);
+      this._emitLive();
       return;
     }
 
     if (this.state === JT_STATE.BASELINE) {
       if (!inZone) {
         this._setState(JT_STATE.AWAITING);
+        this._emitLive();
         return;
       }
       this._samples.push(ankleY);
@@ -108,6 +137,12 @@ export const JumpTracker = {
         }
       }
     }
+
+    this._emitLive();
+  },
+
+  _emitLive() {
+    if (this.onLiveUpdate) this.onLiveUpdate(this.getLiveMetrics());
   },
 
   _avgAnkleY(landmarks) {

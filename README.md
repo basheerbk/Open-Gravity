@@ -1,96 +1,93 @@
 # Open Gravity
 
-Enter your mass, jump in front of your camera, and see your real jump height scaled across **Earth, Moon, Mars, and Pluto**.
+Jump in front of your camera and see how high you'd go on **Earth, Moon, Mars, and Pluto** — all four worlds update in real time from your actual jump height. No mass or height input required.
 
 **Repository:** [github.com/basheerbk/Open-Gravity](https://github.com/basheerbk/Open-Gravity)  
 **Live demo:** [open-gravity-one.vercel.app](https://open-gravity-one.vercel.app)
 
 ## How it works
 
-1. **Enter your mass** (1–300 kg) and height (for jump calibration)
-2. **Allow camera access** — position your full body in frame, 2–3 m from the camera
-3. **Stand still** for ~2 s while the app builds a baseline
-4. **Jump** — MediaPipe Pose tracks the hip rise in real time
-5. **Results** — your measured Earth jump is scaled to all four worlds with correct physics
+1. **Enable camera** — a small picture-in-picture view appears in the corner
+2. **Stand on the mark** (exhibit) or **stand in frame** (web/mobile)
+3. **Hold still** ~1.2 s while the app calibrates ankle baseline
+4. **Jump** — MediaPipe Pose tracks ankle rise; meters fill live during the jump
+5. **Results** — all four astronauts hop with gravity-scaled heights
 
-If you skip the camera, the app falls back to a physics estimate for your mass.
+Jump height is measured from **ankle rise** in the camera image, converted to metres via install calibration (`mPerUnit`).
+
+## Exhibit / kiosk setup
+
+For a fixed camera and floor mark:
+
+1. Tape a "stand here" spot on the floor aligned with the PiP ellipse
+2. Tune zone position: `?zoneX=0.5&zoneY=0.78&zoneW=0.2&zoneH=0.1`
+3. Calibrate scale once: jump a known height, adjust `?mPerUnit=2.8` until Earth reads correctly
+4. Kiosk mode: `?autocam=1` auto-starts the camera
+
+The calibrated `mPerUnit` value is saved in `localStorage` (`og_mPerUnit`).
+
+## Web / mobile (no floor mark)
+
+Append `?zone=off` — the app uses frame-centre detection instead of the stand ellipse. Stand with feet visible in the lower half of the frame.
+
+## URL parameters
+
+| Param | Default | Description |
+|-------|---------|-------------|
+| `autocam=1` | off | Auto-start camera on load |
+| `zone=off` | off | Web mode without floor mark |
+| `mPerUnit` | 2.8 | Metres per normalised ankle-rise at fixed spot |
+| `zoneX`, `zoneY` | 0.5, 0.78 | Stand ellipse centre (normalised 0–1) |
+| `zoneW`, `zoneH` | 0.2, 0.1 | Stand ellipse size (normalised) |
+| `scale=auto` | off | Enable ESP32 load-cell integration (optional) |
 
 ## Run locally
 
 ```bash
-npx serve .
+npx serve . -l 3000
 ```
 
 Open `http://localhost:3000`. Camera access requires HTTPS on non-localhost origins (Vercel handles this automatically).
 
 ## Camera requirements
 
-- A modern browser (Chrome, Edge, Safari 16+, Firefox)
+- Modern browser (Chrome, Edge, Safari 16+, Firefox)
 - Webcam or phone camera with `getUserMedia` support
 - Good lighting; full body visible in frame
 
 ## Physics
 
-| Formula | Description |
-|---------|-------------|
-| `W = m × g` | Weight in newtons |
-| `h_world = h_earth × (9.81 / g_world)` | Jump height scaled from measured Earth jump |
+On a world with surface gravity `g`, jump height scales as:
 
-Gravity values:
+```
+h_world = h_earth × (9.81 / g_world)
+```
 
-| World | g (m/s²) | Jump rank |
-|-------|----------|-----------|
-| Earth | 9.81 | Baseline |
+| World | g (m/s²) | vs Earth |
+|-------|----------|----------|
+| Earth | 9.81 | 1× (baseline) |
 | Mars  | 3.71 | 2.6× higher |
-| Moon  | 1.62 | 6× higher |
+| Moon  | 1.62 | 6.1× higher |
 | Pluto | 0.62 | 15.8× higher |
 
 ## Architecture
 
 ```
 js/
-  app.js          — flow state machine (mass → camera → jump → results)
-  physics.js      — gravity constants, weight and jump formulas
+  app.js          — panels UI, PiP camera, live meter updates
+  physics.js      — gravity constants, jump scaling formulas
   camera.js       — getUserMedia wrapper
-  poseDetector.js — MediaPipe Pose Landmarker (CDN WASM)
-  jumpTracker.js  — baseline + peak detection state machine
-index.html        — UI (4-world panels + camera stage)
-styles.css        — CSS-var-driven animations + responsive layout
-scale.js          — WebSocket client (ESP32 exhibit mode)
-astronaut.svg     — spacesuit graphic
-firmware/         — ESP32 + HX711 sketch (optional exhibit hardware)
+  poseDetector.js — MediaPipe Pose Landmarker (CDN WASM), skeleton overlay
+  jumpTracker.js  — baseline + peak ankle detection state machine
+  standZone.js    — exhibit stand-here ellipse + mPerUnit calibration
+index.html        — 4-world panels + camera PiP
+styles.css        — panel animations, live meter glow, responsive layout
+scale.js          — WebSocket client (ESP32 exhibit mode, optional)
+firmware/         — ESP32 + HX711 sketch (optional hardware)
 ```
 
-## Exhibit / scale mode (optional)
+All pose detection runs **in the browser** — no server-side video processing. MediaPipe loads from CDN; deploy as static files (e.g. Vercel).
 
-Append `?scale=auto` to the URL to enable the ESP32 load-cell scale integration. The scale button in the mass modal will unlock, and the app connects to `ws://192.168.4.1:81/` automatically.
+## Optional: ESP32 scale mode
 
-### Hardware
-
-| Part | Notes |
-|------|-------|
-| ESP32 dev board | Any ESP32-WROOM |
-| HX711 module | Load-cell amplifier |
-| Load cell | Platform scale (50–200 kg rated) |
-
-### Wiring
-
-| HX711 | ESP32 |
-|-------|-------|
-| VCC | 3.3V |
-| GND | GND |
-| DT | GPIO 16 |
-| SCK | GPIO 17 |
-
-### Flash firmware
-
-1. Install Arduino IDE
-2. Install libraries: **HX711**, **WebSockets** (Markus Sattler)
-3. Open [`firmware/gravity_scale/gravity_scale.ino`](firmware/gravity_scale/gravity_scale.ino)
-4. Upload to ESP32
-
-### Connect
-
-1. ESP32 creates WiFi AP: **`OpenGravity-Scale`** (password: `opengravity`)
-2. Connect your device to that network
-3. Open app with `?scale=auto`
+Append `?scale=auto` to connect to an ESP32 load-cell scale at `ws://192.168.4.1:81/`. See [`firmware/gravity_scale/gravity_scale.ino`](firmware/gravity_scale/gravity_scale.ino) for wiring and flash instructions.
