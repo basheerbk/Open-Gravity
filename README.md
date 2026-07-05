@@ -1,31 +1,69 @@
 # Open Gravity
 
-Compare your **mass**, **weight**, and **jump height** on **Earth**, **Moon**, **Mars**, and **Pluto** — with optional live input from an ESP32 load-cell scale.
+Enter your mass, jump in front of your camera, and see your real jump height scaled across **Earth, Moon, Mars, and Pluto**.
 
 **Repository:** [github.com/basheerbk/Open-Gravity](https://github.com/basheerbk/Open-Gravity)  
 **Live demo:** [open-gravity-one.vercel.app](https://open-gravity-one.vercel.app)
 
-## Run the web app
+## How it works
+
+1. **Enter your mass** (1–300 kg) and height (for jump calibration)
+2. **Allow camera access** — position your full body in frame, 2–3 m from the camera
+3. **Stand still** for ~2 s while the app builds a baseline
+4. **Jump** — MediaPipe Pose tracks the hip rise in real time
+5. **Results** — your measured Earth jump is scaled to all four worlds with correct physics
+
+If you skip the camera, the app falls back to a physics estimate for your mass.
+
+## Run locally
 
 ```bash
 npx serve .
 ```
 
-Open `http://localhost:3000` (or the URL shown in the terminal).
+Open `http://localhost:3000`. Camera access requires HTTPS on non-localhost origins (Vercel handles this automatically).
 
-### Auto-connect to scale
+## Camera requirements
+
+- A modern browser (Chrome, Edge, Safari 16+, Firefox)
+- Webcam or phone camera with `getUserMedia` support
+- Good lighting; full body visible in frame
+
+## Physics
+
+| Formula | Description |
+|---------|-------------|
+| `W = m × g` | Weight in newtons |
+| `h_world = h_earth × (9.81 / g_world)` | Jump height scaled from measured Earth jump |
+
+Gravity values:
+
+| World | g (m/s²) | Jump rank |
+|-------|----------|-----------|
+| Earth | 9.81 | Baseline |
+| Mars  | 3.71 | 2.6× higher |
+| Moon  | 1.62 | 6× higher |
+| Pluto | 0.62 | 15.8× higher |
+
+## Architecture
 
 ```
-http://localhost:3000/?scale=auto
+js/
+  app.js          — flow state machine (mass → camera → jump → results)
+  physics.js      — gravity constants, weight and jump formulas
+  camera.js       — getUserMedia wrapper
+  poseDetector.js — MediaPipe Pose Landmarker (CDN WASM)
+  jumpTracker.js  — baseline + peak detection state machine
+index.html        — UI (4-world panels + camera stage)
+styles.css        — CSS-var-driven animations + responsive layout
+scale.js          — WebSocket client (ESP32 exhibit mode)
+astronaut.svg     — spacesuit graphic
+firmware/         — ESP32 + HX711 sketch (optional exhibit hardware)
 ```
 
-## Manual mode
+## Exhibit / scale mode (optional)
 
-1. Open the app → choose **Enter manually**
-2. Type mass in kg (1–300)
-3. See weight (N), jump height (m), and astronaut hops on all four worlds
-
-## Scale mode (ESP32 + load cell)
+Append `?scale=auto` to the URL to enable the ESP32 load-cell scale integration. The scale button in the mass modal will unlock, and the app connects to `ws://192.168.4.1:81/` automatically.
 
 ### Hardware
 
@@ -33,67 +71,26 @@ http://localhost:3000/?scale=auto
 |------|-------|
 | ESP32 dev board | Any ESP32-WROOM |
 | HX711 module | Load-cell amplifier |
-| Load cell | Platform scale (e.g. 50–200 kg rated) |
+| Load cell | Platform scale (50–200 kg rated) |
 
-**Wiring**
+### Wiring
 
 | HX711 | ESP32 |
 |-------|-------|
 | VCC | 3.3V |
 | GND | GND |
-| DT (DOUT) | GPIO 16 |
+| DT | GPIO 16 |
 | SCK | GPIO 17 |
 
 ### Flash firmware
 
-1. Install Arduino IDE (or PlatformIO)
+1. Install Arduino IDE
 2. Install libraries: **HX711**, **WebSockets** (Markus Sattler)
 3. Open [`firmware/gravity_scale/gravity_scale.ino`](firmware/gravity_scale/gravity_scale.ino)
-4. Select your ESP32 board and upload
-
-### Calibrate
-
-1. Power on with **nothing** on the pad → firmware auto-tares
-2. Place a **known mass** (e.g. 5 kg) on the pad
-3. Adjust `scale.set_scale(-7050.0f)` in the sketch until Serial Monitor shows correct kg
-4. Re-upload
+4. Upload to ESP32
 
 ### Connect
 
 1. ESP32 creates WiFi AP: **`OpenGravity-Scale`** (password: `opengravity`)
-2. Connect the display PC to that network (or use ESP32 station mode in a future update)
-3. In the app, click **Connect scale** (or use `?scale=auto`)
-4. WebSocket URL: `ws://192.168.4.1:81/`
-
-### Exhibit flow
-
-1. **Jump** onto the pad → landing force flashes on Earth
-2. **Stand still 3 seconds** → countdown on screen
-3. Mass is locked → all four worlds update (weight, jump meters, landing force estimates)
-4. **Step off** → ready for the next person
-
-## Gravity values
-
-| World | g (m/s²) | Jump rank |
-|-------|----------|-----------|
-| Pluto | 0.62 | Highest |
-| Moon | 1.62 | 2nd |
-| Mars | 3.71 | 3rd |
-| Earth | 9.81 | Lowest |
-
-## Physics
-
-- **Weight:** `W = mass × g` (newtons)
-- **Jump height:** `h = 0.5 m × (70 / mass) × (9.81 / g)` — lighter people jump higher; weaker gravity helps more
-- **Landing force (other worlds):** estimated as `peakEarth × (g_planet / g_earth)`
-
-## Files
-
-```
-index.html    — UI
-app.js        — simulation + scale orchestration
-scale.js      — WebSocket client
-styles.css    — layout (4 panels)
-astronaut.svg — spacesuit graphic
-firmware/     — ESP32 sketch
-```
+2. Connect your device to that network
+3. Open app with `?scale=auto`

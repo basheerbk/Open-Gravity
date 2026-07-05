@@ -1,6 +1,6 @@
-const DEFAULT_SCALE_URL = "ws://192.168.4.1:81/";
+export const DEFAULT_SCALE_URL = "ws://192.168.4.1:81/";
 
-const ScaleClient = {
+export const ScaleClient = {
   url: DEFAULT_SCALE_URL,
   ws: null,
   reconnectTimer: null,
@@ -88,4 +88,5 @@ const ScaleClient = {
   },
 };
 
+// Expose globally for legacy exhibit-mode scripts
 window.ScaleClient = ScaleClient;
