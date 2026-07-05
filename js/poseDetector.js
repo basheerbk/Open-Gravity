@@ -5,6 +5,8 @@ import {
   DrawingUtils,
 } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
 
+import { drawStandZone, feetInZone } from "./standZone.js";
+
 const WASM_PATH =
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
 
@@ -37,11 +39,11 @@ const KEY_JOINTS = [
   { idx: LM.R_ELBOW,     color: "#a8d8ff", label: null },
   { idx: LM.L_WRIST,     color: "#a8d8ff", label: null },
   { idx: LM.R_WRIST,     color: "#a8d8ff", label: null },
-  { idx: LM.L_HIP,       color: "#ffb347", label: "hip" },
+  { idx: LM.L_HIP,       color: "#ffb347", label: null },
   { idx: LM.R_HIP,       color: "#ffb347", label: null },
   { idx: LM.L_KNEE,      color: "#ffe066", label: null },
   { idx: LM.R_KNEE,      color: "#ffe066", label: null },
-  { idx: LM.L_ANKLE,     color: "#6ee7a0", label: "ankle" },
+  { idx: LM.L_ANKLE,     color: "#6ee7a0", label: "feet" },
   { idx: LM.R_ANKLE,     color: "#6ee7a0", label: null },
 ];
 
@@ -68,9 +70,9 @@ export const PoseDetector = {
   },
 
   /**
-   * Draw full skeleton + highlighted body points onto the PiP canvas.
+   * Draw stand zone, skeleton, and body points onto the PiP canvas.
    */
-  drawSkeleton(canvas, videoEl, landmarks) {
+  drawFrame(canvas, videoEl, landmarks) {
     const ctx = canvas.getContext("2d");
     const vw = videoEl.videoWidth  || 640;
     const vh = videoEl.videoHeight || 480;
@@ -81,6 +83,10 @@ export const PoseDetector = {
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const inZone = feetInZone(landmarks);
+    drawStandZone(ctx, canvas.width, canvas.height, inZone);
+
     if (!landmarks) return;
 
     const scale = Math.min(canvas.width, canvas.height);
@@ -130,26 +136,20 @@ export const PoseDetector = {
       }
     }
 
-    // Hip-centre marker (used for jump height)
-    const lh = landmarks[LM.L_HIP];
-    const rh = landmarks[LM.R_HIP];
-    if (lh && rh) {
-      const hx = ((lh.x + rh.x) / 2) * canvas.width;
-      const hy = ((lh.y + rh.y) / 2) * canvas.height;
-
-      // Crosshair at hip centre
-      const arm = keyR * 1.6;
-      ctx.strokeStyle = "#ffb347";
+    // Ankle tracking marker (jump height measured from feet)
+    const la = landmarks[LM.L_ANKLE];
+    const ra = landmarks[LM.R_ANKLE];
+    if (la && ra) {
+      const ax = ((la.x + ra.x) / 2) * canvas.width;
+      const ay = ((la.y + ra.y) / 2) * canvas.height;
+      ctx.strokeStyle = "#6ee7a0";
       ctx.lineWidth = 1.5;
+      ctx.setLineDash([3, 3]);
       ctx.beginPath();
-      ctx.moveTo(hx - arm, hy); ctx.lineTo(hx + arm, hy);
-      ctx.moveTo(hx, hy - arm); ctx.lineTo(hx, hy + arm);
+      ctx.moveTo(0, ay);
+      ctx.lineTo(canvas.width, ay);
       ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(hx, hy, keyR * 0.55, 0, Math.PI * 2);
-      ctx.fillStyle = "#ffb347";
-      ctx.fill();
+      ctx.setLineDash([]);
     }
   },
 };

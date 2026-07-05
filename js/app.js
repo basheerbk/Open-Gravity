@@ -10,12 +10,15 @@ import {
 import { Camera } from "./camera.js";
 import { PoseDetector } from "./poseDetector.js";
 import { JumpTracker, JT_STATE } from "./jumpTracker.js";
+import { EXHIBIT_M_PER_UNIT } from "./standZone.js";
+
+const params = new URLSearchParams(location.search);
+const AUTO_CAMERA = params.get("autocam") === "1";
 
 let lastJumpM = null;
 let animFrameId = null;
 let cameraActive = false;
 
-// ── DOM refs ──────────────────────────────────────────────────────────────────
 const videoEl        = document.getElementById("poseVideo");
 const canvasEl       = document.getElementById("poseCanvas");
 const jumpPhaseLabel = document.getElementById("jumpPhaseLabel");
@@ -30,13 +33,13 @@ const aboutCloseBtn  = document.getElementById("aboutCloseBtn");
 const exhibitBanner  = document.getElementById("exhibitBanner");
 
 const PHASE_LABELS = {
-  [JT_STATE.BASELINE]: "Stand still…",
-  [JT_STATE.READY]:    "JUMP!",
-  [JT_STATE.JUMPING]:  "In the air!",
-  [JT_STATE.DONE]:     "Got it!",
+  [JT_STATE.AWAITING]:  "Stand here",
+  [JT_STATE.BASELINE]:  "Hold still…",
+  [JT_STATE.READY]:     "JUMP!",
+  [JT_STATE.JUMPING]:   "Up!",
+  [JT_STATE.DONE]:      "Nice!",
 };
 
-// ── Panel rendering ───────────────────────────────────────────────────────────
 function buildMeterLabels(container, meterMax) {
   container.innerHTML = "";
   [meterMax, 0].forEach((m) => {
@@ -76,21 +79,23 @@ function applySimulation(earthJump) {
     if (labels) buildMeterLabels(labels, meterMax);
     updateJumpMeter(panel, worldJumpM, meterMax);
 
-    const gravDisp = panel.querySelector("[data-gravity-display]");
-    if (gravDisp) gravDisp.textContent = g.toFixed(2);
-
     const multDisp = panel.querySelector("[data-mult-display]");
     if (multDisp) {
       multDisp.textContent = body === "earth"
-        ? "Reference"
-        : `${jumpMultiplier(g).toFixed(1)}× your Earth jump`;
+        ? "Your jump"
+        : `${jumpMultiplier(g).toFixed(1)}× higher`;
     }
 
     const noteEl = panel.querySelector("[data-jump-note]");
     if (noteEl) {
-      noteEl.textContent = body === "earth"
-        ? (lastJumpM ? `Measured: ${formatMeters(earthJump)} m` : "Jump to measure!")
-        : `${formatMeters(worldJumpM)} m here`;
+      if (body === "earth") {
+        noteEl.textContent = lastJumpM
+          ? `${formatMeters(earthJump)} m`
+          : "Stand on the mark & jump";
+      } else {
+        const times = (worldJumpM / earthJump).toFixed(1);
+        noteEl.textContent = `${formatMeters(worldJumpM)} m (${times}×)`;
+      }
     }
 
     setHopCSS(panel, worldJumpM, g);
@@ -123,7 +128,6 @@ function setStatus(text) {
   if (jumpResultInfo) jumpResultInfo.textContent = text;
 }
 
-// ── Camera + tracking ─────────────────────────────────────────────────────────
 async function startCamera() {
   if (cameraErrEl) cameraErrEl.hidden = true;
   setPhase("Starting…");
@@ -135,14 +139,14 @@ async function startCamera() {
     cameraActive = true;
     if (retryBtn) retryBtn.hidden = false;
     beginTracking();
+    setStatus("Step on the mark → stand still → jump!");
   } catch (err) {
     cameraActive = false;
     if (cameraOverlay) cameraOverlay.classList.remove("camera-pip__overlay--off");
-    const denied = err.name === "NotAllowedError" || err.name === "PermissionDeniedError";
     setPhase("Camera off");
     if (cameraErrEl) {
-      cameraErrEl.textContent = denied
-        ? "Camera denied — check browser permissions"
+      cameraErrEl.textContent = err.name === "NotAllowedError"
+        ? "Allow camera access to play"
         : err.message;
       cameraErrEl.hidden = false;
     }
@@ -153,6 +157,14 @@ function beginTracking() {
   JumpTracker.onStateChange = (state) => {
     const label = PHASE_LABELS[state];
     if (label) setPhase(label, state === JT_STATE.READY);
+
+    if (state === JT_STATE.AWAITING) {
+      setStatus("Stand on the mark, then jump!");
+    } else if (state === JT_STATE.BASELINE) {
+      setStatus("Hold still on the mark…");
+    } else if (state === JT_STATE.READY) {
+      setStatus("Jump now!");
+    }
   };
 
   JumpTracker.onJumpCaptured = (jumpM) => {
@@ -174,52 +186,43 @@ function beginTracking() {
       const noteEl = panel.querySelector("[data-jump-note]");
       if (noteEl) {
         noteEl.textContent = body === "earth"
-          ? `Measured: ${formatMeters(jumpM)} m`
-          : `${formatMeters(worldJumpM)} m here`;
+          ? `${formatMeters(jumpM)} m`
+          : `${formatMeters(worldJumpM)} m (${(worldJumpM / jumpM).toFixed(1)}×)`;
       }
     });
 
     triggerJumpAnimation();
-    setStatus(`Last jump: ${formatMeters(jumpM)} m on Earth`);
+    setStatus(`Earth ${formatMeters(jumpM)} m → Moon ${formatMeters(worldJumps[1])} m → Pluto ${formatMeters(worldJumps[3])} m`);
   };
 
-  JumpTracker.start(170);
+  JumpTracker.start();
   if (!animFrameId) renderLoop();
 }
 
 function renderLoop() {
   if (cameraActive && PoseDetector.landmarker) {
     const landmarks = PoseDetector.detect(videoEl);
-    PoseDetector.drawSkeleton(canvasEl, videoEl, landmarks);
+    PoseDetector.drawFrame(canvasEl, videoEl, landmarks);
     JumpTracker.update(landmarks);
   }
   animFrameId = requestAnimationFrame(renderLoop);
 }
 
-function stopCamera() {
-  cameraActive = false;
-  Camera.stop();
-  JumpTracker.reset();
-  if (cameraOverlay) cameraOverlay.classList.remove("camera-pip__overlay--off");
-  if (retryBtn) retryBtn.hidden = true;
-  setPhase("Enable camera");
-}
-
-// ── Event listeners ───────────────────────────────────────────────────────────
 cameraStartBtn?.addEventListener("click", () => startCamera());
 
 retryBtn?.addEventListener("click", () => {
   if (cameraActive) {
-    JumpTracker.start(170);
-    setPhase("Stand still…");
-    setStatus("Recalibrating — stand still");
+    JumpTracker.start();
+    setPhase("Stand here");
+    setStatus("Next person — step on the mark");
   }
 });
 
 aboutBtn?.addEventListener("click", () => aboutModal.showModal());
 aboutCloseBtn?.addEventListener("click", () => aboutModal.close());
 
-// ── Boot — panels visible immediately with demo jump ──────────────────────────
 applySimulation(DEFAULT_EARTH_JUMP);
-setStatus("Enable camera and jump — astronauts will follow your height");
+setStatus("Stand on the mark and jump — see your height on every world");
 renderLoop();
+
+if (AUTO_CAMERA) startCamera();

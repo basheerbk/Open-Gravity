@@ -34,7 +34,7 @@
 
   <!-- Status bar -->
   <div class="status-bar" id="resultsBar">
-    <span class="status-bar__info" id="jumpResultInfo">Jump in front of the camera — astronauts will follow</span>
+    <span class="status-bar__info" id="jumpResultInfo">Stand on the mark and jump — see your height on every world</span>
   </div>
 
   <!-- ── 4-world panels (always visible) ─────────────────────────────── -->
@@ -216,7 +216,7 @@
   <!-- ── Camera picture-in-picture ─────────────────────────────────────── -->
   <aside class="camera-pip" id="cameraPip" aria-label="Your camera">
     <div class="camera-pip__header">
-      <span class="camera-pip__label">You</span>
+      <span class="camera-pip__label">Jump spot</span>
       <span class="camera-pip__phase" id="jumpPhaseLabel">Enable camera</span>
     </div>
     <div class="camera-pip__media">
@@ -248,14 +248,22 @@
     <div class="modal__form modal__form--about">
       <button type="button" class="modal__close modal__close--float" id="aboutCloseBtn" aria-label="Close">&times;</button>
       <h2 class="about-title">About</h2>
-      <p class="about-lead"><strong>Open Gravity</strong> — jump in front of your camera and see how high you'd go on Earth, the Moon, Mars, and Pluto.</p>
-      <p class="about-body">We measure your real jump height with pose tracking, then scale it for each world's gravity. No mass needed — just jump!</p>
+      <p class="about-lead"><strong>Open Gravity</strong> — an exhibit where kids stand on the mark, jump, and see how high they'd go on Earth, the Moon, Mars, and Pluto.</p>
+      <p class="about-body">Place a camera facing the jump spot. Each kid steps on the <strong>STAND HERE</strong> mark, holds still, then jumps. Pose tracking measures the lift from their feet and scales it across four worlds — no weight or height needed.</p>
+      <ul class="about-steps">
+        <li>Fixed jump spot with on-screen marker</li>
+        <li>Feet-based measurement at the mark</li>
+        <li>All four astronauts hop together, scaled by gravity</li>
+        <li>Next kid: step on the mark again</li>
+      </ul>
       <div class="about-footer">
+        <a class="about-link" href="https://github.com/basheerbk/Open-Gravity" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <span class="about-dot" aria-hidden="true">·</span>
         <a class="about-link" href="https://basheer.diy" target="_blank" rel="noopener noreferrer">basheer.diy</a>
         <span class="about-dot" aria-hidden="true">·</span>
         <span class="about-label">Open source</span>
       </div>
-      <p class="about-tagline">Gravity simulation for curious minds</p>
+      <p class="about-tagline">Jump once. Explore four worlds.</p>
     </div>
   </dialog>
 
