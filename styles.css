@@ -1052,7 +1052,7 @@ body {
              opacity: calc(var(--shadow-opacity) * 0.2); }
 }
 
-/* —— Stats card (mass + weight) —— */
+/* —— Stats card —— */
 .stats-card {
   flex-shrink: 0;
   margin-top: auto;
@@ -1070,6 +1070,10 @@ body {
     0 -2px 12px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   position: relative;
+}
+
+.stats-card--gravity {
+  grid-template-columns: 1fr;
 }
 
 .stats-card::before {

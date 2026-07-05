@@ -14,12 +14,6 @@
     <div class="header__inner">
       <h1 class="header__title">Open Gravity</h1>
       <div class="header__actions">
-        <button type="button" class="header__icon-btn" id="settingsBtn" aria-label="Settings">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
         <button type="button" class="header__icon-btn" id="aboutBtn" aria-label="About">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.75"/>
@@ -52,9 +46,8 @@
           <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M21 3v5h-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Retry
+        Recalibrate
       </button>
-      <button type="button" class="results-bar__btn results-bar__btn--ghost" id="changeMassBtn">Change mass</button>
     </div>
   </div>
 
@@ -63,7 +56,7 @@
 
     <!-- Step 1: Setup card -->
     <div class="camera-setup-card" id="cameraSetupCard">
-      <p class="camera-setup__eyebrow">Step 2 of 3</p>
+      <p class="camera-setup__eyebrow">Get started</p>
       <h2 class="camera-setup__title">Set up your camera</h2>
       <ul class="camera-setup__tips">
         <li>
@@ -100,16 +93,9 @@
           Enable camera
         </button>
         <button type="button" class="btn-text" id="skipCameraBtn">
-          Skip — use physics estimate
+          Skip — try demo (0.5 m jump)
         </button>
       </div>
-
-      <button type="button" class="camera-setup__back" id="cameraBackBtn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Back
-      </button>
     </div>
 
     <!-- Step 2: Live camera + jump capture -->
@@ -125,7 +111,7 @@
       </div>
 
       <button type="button" class="btn-text camera-live__skip" id="skipLiveBtn">
-        Use estimate instead
+        Skip — try demo
       </button>
     </div>
   </div>
@@ -162,16 +148,15 @@
             <div class="platform-edge" aria-hidden="true"></div>
           </div>
         </div>
-        <div class="stats-card">
+        <div class="stats-card stats-card--gravity">
           <div class="stat">
-            <span class="stat__label">Mass</span>
-            <div class="stat__row"><span class="stat__value" data-mass-display>—</span><span class="stat__unit">kg</span></div>
+            <span class="stat__label">Gravity</span>
+            <div class="stat__row">
+              <span class="stat__value" data-gravity-display>9.81</span>
+              <span class="stat__unit">m/s²</span>
+            </div>
           </div>
-          <div class="stat">
-            <span class="stat__label">Weight</span>
-            <div class="stat__row"><span class="stat__value" data-weight-display>—</span><span class="stat__unit">N</span></div>
-          </div>
-          <span class="stat__compare" data-compare-display>—</span>
+          <span class="stat__compare" data-mult-display>Reference</span>
         </div>
       </div>
     </section>
@@ -208,16 +193,15 @@
             <div class="platform-edge" aria-hidden="true"></div>
           </div>
         </div>
-        <div class="stats-card">
+        <div class="stats-card stats-card--gravity">
           <div class="stat">
-            <span class="stat__label">Mass</span>
-            <div class="stat__row"><span class="stat__value" data-mass-display>—</span><span class="stat__unit">kg</span></div>
+            <span class="stat__label">Gravity</span>
+            <div class="stat__row">
+              <span class="stat__value" data-gravity-display>1.62</span>
+              <span class="stat__unit">m/s²</span>
+            </div>
           </div>
-          <div class="stat">
-            <span class="stat__label">Weight</span>
-            <div class="stat__row"><span class="stat__value" data-weight-display>—</span><span class="stat__unit">N</span></div>
-          </div>
-          <span class="stat__compare" data-compare-display>—</span>
+          <span class="stat__compare" data-mult-display>Reference</span>
         </div>
       </div>
     </section>
@@ -251,16 +235,15 @@
             <div class="platform-edge" aria-hidden="true"></div>
           </div>
         </div>
-        <div class="stats-card">
+        <div class="stats-card stats-card--gravity">
           <div class="stat">
-            <span class="stat__label">Mass</span>
-            <div class="stat__row"><span class="stat__value" data-mass-display>—</span><span class="stat__unit">kg</span></div>
+            <span class="stat__label">Gravity</span>
+            <div class="stat__row">
+              <span class="stat__value" data-gravity-display>3.71</span>
+              <span class="stat__unit">m/s²</span>
+            </div>
           </div>
-          <div class="stat">
-            <span class="stat__label">Weight</span>
-            <div class="stat__row"><span class="stat__value" data-weight-display>—</span><span class="stat__unit">N</span></div>
-          </div>
-          <span class="stat__compare" data-compare-display>—</span>
+          <span class="stat__compare" data-mult-display>Reference</span>
         </div>
       </div>
     </section>
@@ -294,106 +277,28 @@
             <div class="platform-edge" aria-hidden="true"></div>
           </div>
         </div>
-        <div class="stats-card">
+        <div class="stats-card stats-card--gravity">
           <div class="stat">
-            <span class="stat__label">Mass</span>
-            <div class="stat__row"><span class="stat__value" data-mass-display>—</span><span class="stat__unit">kg</span></div>
+            <span class="stat__label">Gravity</span>
+            <div class="stat__row">
+              <span class="stat__value" data-gravity-display>0.62</span>
+              <span class="stat__unit">m/s²</span>
+            </div>
           </div>
-          <div class="stat">
-            <span class="stat__label">Weight</span>
-            <div class="stat__row"><span class="stat__value" data-weight-display>—</span><span class="stat__unit">N</span></div>
-          </div>
-          <span class="stat__compare" data-compare-display>—</span>
+          <span class="stat__compare" data-mult-display>Reference</span>
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- ── Mass + height input modal ─────────────────────────────────────── -->
-  <dialog class="modal" id="weightModal">
-    <form method="dialog" class="modal__form modal__form--weight" id="weightForm">
-      <p class="modal__eyebrow">Get started</p>
-      <h2 class="modal__title">What's your mass?</h2>
-      <p class="modal__hint">Enter your body mass in kg. Then we'll use the camera to measure your real jump on Earth and show how high you'd go on the Moon, Mars, and Pluto.</p>
-
-      <!-- Scale toggle (hidden unless ?scale=auto) -->
-      <div class="modal__modes" id="modalModes" hidden>
-        <button type="button" class="modal__mode-btn" id="modeScaleBtn" disabled aria-disabled="true">
-          Use scale <span class="modal__mode-badge">Exhibit</span>
-        </button>
-        <button type="button" class="modal__mode-btn modal__mode-btn--active" id="modeManualBtn">Enter manually</button>
-      </div>
-
-      <div id="modalManualPanel">
-        <label class="modal__label" for="weightInput">Your mass</label>
-        <div class="modal__input-row">
-          <input
-            type="number"
-            id="weightInput"
-            class="modal__input"
-            min="1"
-            max="300"
-            step="0.1"
-            inputmode="decimal"
-            placeholder="70"
-            value="70"
-            autocomplete="off"
-            enterkeyhint="go"
-            aria-describedby="weightRangeHint"
-          />
-          <span class="modal__suffix modal__suffix--input">kg</span>
-        </div>
-
-        <p class="modal__range-hint" id="weightRangeHint">Between 1 and 300 kg</p>
-        <p class="modal__error" id="weightError" hidden>Please enter a mass between 1 and 300 kg.</p>
-
-        <button type="submit" class="btn-primary">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.87v6.26a1 1 0 0 1-1.447.94L15 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-            <rect x="3" y="8" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.75"/>
-          </svg>
-          <span>Continue to camera</span>
-        </button>
-      </div>
-
-      <!-- Scale capture panel (exhibit mode) -->
-      <div class="modal__scale-panel" id="modalScalePanel" hidden>
-        <p class="modal__live-kg"><span id="modalLiveKg">—</span> <span class="modal__suffix">kg</span></p>
-        <p class="modal__scale-hint">Jump onto the pad, then stand still for 3 seconds.</p>
-        <button type="button" class="btn-secondary" id="modalConnectBtn">Connect to scale</button>
-      </div>
-    </form>
-  </dialog>
-
-  <!-- ── Settings modal ────────────────────────────────────────────────── -->
-  <dialog class="modal modal--settings" id="settingsModal">
-    <div class="modal__form">
-      <div class="modal__form-head">
-        <h2 class="modal__title">Settings</h2>
-        <button type="button" class="modal__close" id="settingsCloseBtn" aria-label="Close">&times;</button>
-      </div>
-      <div class="scale-bar scale-bar--settings" id="scaleBar">
-        <span class="scale-dot" id="scaleDot" data-state="offline"></span>
-        <span class="scale-bar__status" id="scaleStatus">Scale offline</span>
-        <span class="scale-bar__kg" id="scaleLiveKg">— kg</span>
-      </div>
-      <div class="settings-actions">
-        <button type="button" class="btn-secondary" id="scaleConnectBtn">Connect scale</button>
-        <button type="button" class="btn-secondary" id="scaleTareBtn" hidden>Tare</button>
-        <button type="button" class="btn-secondary" id="scaleResetBtn" hidden>Reset</button>
-        <button type="button" class="btn-secondary" id="changeWeightBtn">Change mass</button>
-      </div>
-    </div>
-  </dialog>
-
   <!-- ── About modal ───────────────────────────────────────────────────── -->
   <dialog class="modal modal--about" id="aboutModal">
     <div class="modal__form modal__form--about">
       <button type="button" class="modal__close modal__close--float" id="aboutCloseBtn" aria-label="Close">&times;</button>
       <h2 class="about-title">About</h2>
-      <p class="about-lead"><strong>Open Gravity</strong> compares your weight and jump height on Earth, the Moon, Mars, and Pluto.</p>
-      <p class="about-body">Jump in front of your camera — we measure your real jump height, then show how high you'd jump on other worlds. Weaker gravity means lighter weight and bigger jumps — Pluto wins every time.</p>
+      <p class="about-lead"><strong>Open Gravity</strong> — jump in front of your camera and see how high you'd go on Earth, the Moon, Mars, and Pluto.</p>
+      <p class="about-body">We measure your real jump height with pose tracking, then scale it for each world's gravity. No mass needed — just jump!</p>
       <div class="about-footer">
         <a class="about-link" href="https://basheer.diy" target="_blank" rel="noopener noreferrer">basheer.diy</a>
         <span class="about-dot" aria-hidden="true">·</span>
