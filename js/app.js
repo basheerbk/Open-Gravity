@@ -10,7 +10,6 @@ import {
 import { Camera } from "./camera.js";
 import { PoseDetector } from "./poseDetector.js";
 import { JumpTracker, JT_STATE } from "./jumpTracker.js";
-import { EXHIBIT_M_PER_UNIT, ZONE_OFF } from "./standZone.js";
 
 const params = new URLSearchParams(location.search);
 const AUTO_CAMERA = params.get("autocam") === "1";
@@ -28,7 +27,6 @@ const jumpPhaseLabel = document.getElementById("jumpPhaseLabel");
 const cameraStartBtn = document.getElementById("cameraStartBtn");
 const cameraOverlay  = document.getElementById("cameraOverlay");
 const cameraErrEl    = document.getElementById("cameraPermError");
-const jumpResultInfo = document.getElementById("jumpResultInfo");
 const retryBtn       = document.getElementById("jumpAgainBtn");
 const aboutModal     = document.getElementById("aboutModal");
 const aboutBtn       = document.getElementById("aboutBtn");
@@ -36,7 +34,7 @@ const aboutCloseBtn  = document.getElementById("aboutCloseBtn");
 const exhibitBanner  = document.getElementById("exhibitBanner");
 
 const PHASE_LABELS = {
-  [JT_STATE.AWAITING]:  ZONE_OFF ? "Stand in frame" : "Stand here",
+  [JT_STATE.AWAITING]:  "Step in view",
   [JT_STATE.BASELINE]:  "Hold still…",
   [JT_STATE.READY]:     "JUMP!",
   [JT_STATE.JUMPING]:   "Up!",
@@ -100,8 +98,6 @@ function updateLivePanels(earthJumpM) {
         : `${formatMeters(worldJumpM)} m (${(worldJumpM / earthJumpM).toFixed(1)}×)`;
     }
   });
-
-  setStatus(`Live — Earth ${formatMeters(earthJumpM)} m`);
 }
 
 function applySimulation(earthJump) {
@@ -130,7 +126,7 @@ function applySimulation(earthJump) {
       if (body === "earth") {
         noteEl.textContent = lastJumpM
           ? `${formatMeters(earthJump)} m`
-          : ZONE_OFF ? "Stand in frame & jump" : "Stand on the mark & jump";
+          : "Face camera & jump";
       } else {
         const times = (worldJumpM / earthJump).toFixed(1);
         noteEl.textContent = `${formatMeters(worldJumpM)} m (${times}×)`;
@@ -164,10 +160,6 @@ function setPhase(text, ready = false) {
   }
 }
 
-function setStatus(text) {
-  if (jumpResultInfo) jumpResultInfo.textContent = text;
-}
-
 async function startCamera() {
   if (cameraErrEl) cameraErrEl.hidden = true;
   setPhase("Starting…");
@@ -179,9 +171,6 @@ async function startCamera() {
     cameraActive = true;
     if (retryBtn) retryBtn.hidden = false;
     beginTracking();
-    setStatus(ZONE_OFF
-      ? "Stand in frame → hold still → jump!"
-      : "Step on the mark → stand still → jump!");
   } catch (err) {
     cameraActive = false;
     if (cameraOverlay) cameraOverlay.classList.remove("camera-pip__overlay--off");
@@ -202,11 +191,6 @@ function beginTracking() {
 
     if (state === JT_STATE.AWAITING) {
       setPanelsLive(false);
-      setStatus(ZONE_OFF ? "Stand in frame, then jump!" : "Stand on the mark, then jump!");
-    } else if (state === JT_STATE.BASELINE) {
-      setStatus("Hold still…");
-    } else if (state === JT_STATE.READY) {
-      setStatus("Jump now!");
     } else if (state === JT_STATE.JUMPING) {
       setPanelsLive(true);
     } else if (state === JT_STATE.DONE) {
@@ -251,7 +235,6 @@ function beginTracking() {
     });
 
     triggerJumpAnimation();
-    setStatus(`Earth ${formatMeters(jumpM)} m → Moon ${formatMeters(worldJumps[1])} m → Pluto ${formatMeters(worldJumps[3])} m`);
   };
 
   JumpTracker.start();
@@ -261,13 +244,13 @@ function beginTracking() {
 function renderLoop() {
   if (cameraActive && PoseDetector.landmarker) {
     const landmarks = PoseDetector.detect(videoEl);
+    JumpTracker.update(landmarks);
     const metrics = JumpTracker.getLiveMetrics();
     PoseDetector.drawFrame(canvasEl, videoEl, landmarks, {
       state: metrics.state,
       baselineProgress: metrics.baselineProgress,
       liveJumpM: metrics.liveJumpM,
     });
-    JumpTracker.update(landmarks);
   }
   animFrameId = requestAnimationFrame(renderLoop);
 }
@@ -277,8 +260,7 @@ cameraStartBtn?.addEventListener("click", () => startCamera());
 retryBtn?.addEventListener("click", () => {
   if (cameraActive) {
     JumpTracker.start();
-    setPhase(ZONE_OFF ? "Stand in frame" : "Stand here");
-    setStatus(ZONE_OFF ? "Next person — stand in frame" : "Next person — step on the mark");
+    setPhase("Step in view");
   }
 });
 
@@ -286,9 +268,6 @@ aboutBtn?.addEventListener("click", () => aboutModal.showModal());
 aboutCloseBtn?.addEventListener("click", () => aboutModal.close());
 
 applySimulation(DEFAULT_EARTH_JUMP);
-setStatus(ZONE_OFF
-  ? "Stand in frame and jump — see your height on every world"
-  : "Stand on the mark and jump — see your height on every world");
 renderLoop();
 
 if (AUTO_CAMERA) startCamera();

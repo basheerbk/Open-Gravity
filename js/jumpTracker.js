@@ -1,11 +1,22 @@
-import { feetInZone, EXHIBIT_M_PER_UNIT } from "./standZone.js";
+import {
+  poseReady,
+  noseTracked,
+  bodyScaleNorm,
+  normDeltaToMeters,
+} from "./standZone.js";
 
-const LM = { L_ANKLE: 27, R_ANKLE: 28 };
+const LM = { NOSE: 0 };
 
-const BASELINE_MS = 1200;
-const MIN_SAMPLES = 15;
-const JUMP_THRESHOLD = 0.018;
-const MIN_JUMP_M = 0.02;
+const BASELINE_MS = 800;
+const MIN_STILL_MS = 350;
+const MIN_SAMPLES = 8;
+const STILL_VARIANCE = 0.00006;
+const LANDING_FRAMES = 3;
+const LOST_FRAMES = 12;
+const EMA_ALPHA = 0.5;
+const JUMP_RATIO = 0.05;
+const LANDING_RATIO = 0.025;
+const MIN_JUMP_M = 0.03;
 const MAX_JUMP_M = 2.5;
 
 export const JT_STATE = {
@@ -20,24 +31,30 @@ export const JT_STATE = {
 export const JumpTracker = {
   state: JT_STATE.IDLE,
 
-  _baselineAnkleY: null,
-  _peakAnkleY: null,
-  _currentAnkleY: null,
+  _baselineY: null,
+  _peakY: null,
+  _smoothY: null,
+  _bodyScale: null,
   _samples: [],
   _baselineStart: 0,
-  _inZone: false,
+  _landingCount: 0,
+  _lostCount: 0,
+  _tracked: false,
 
   onStateChange: null,
   onJumpCaptured: null,
   onLiveUpdate: null,
 
   start() {
-    this._baselineAnkleY = null;
-    this._peakAnkleY = null;
-    this._currentAnkleY = null;
+    this._baselineY = null;
+    this._peakY = null;
+    this._smoothY = null;
+    this._bodyScale = null;
     this._samples = [];
     this._baselineStart = 0;
-    this._inZone = false;
+    this._landingCount = 0;
+    this._lostCount = 0;
+    this._tracked = false;
     this._setState(JT_STATE.AWAITING);
   },
 
@@ -52,18 +69,19 @@ export const JumpTracker = {
         : this.state === JT_STATE.READY || this.state === JT_STATE.JUMPING ? 1 : 0;
 
     let liveNormDelta = 0;
-    if (this._baselineAnkleY != null && this._currentAnkleY != null) {
-      liveNormDelta = Math.max(0, this._baselineAnkleY - this._currentAnkleY);
+    if (this._baselineY != null && this._smoothY != null) {
+      liveNormDelta = Math.max(0, this._baselineY - this._smoothY);
     }
 
+    const scale = this._bodyScale || 0.35;
     return {
       state: this.state,
-      inZone: this._inZone,
+      tracked: this._tracked,
       liveNormDelta,
-      liveJumpM: liveNormDelta * EXHIBIT_M_PER_UNIT,
+      liveJumpM: normDeltaToMeters(liveNormDelta, scale),
       baselineProgress,
-      baselineAnkleY: this._baselineAnkleY,
-      currentAnkleY: this._currentAnkleY,
+      baselineY: this._baselineY,
+      currentY: this._smoothY,
     };
   },
 
@@ -71,16 +89,20 @@ export const JumpTracker = {
     if (!landmarks || this.state === JT_STATE.IDLE || this.state === JT_STATE.DONE)
       return;
 
-    const ankleY = this._avgAnkleY(landmarks);
-    if (ankleY == null) return;
+    const trackY = this._smoothNose(landmarks);
+    if (trackY == null) {
+      this._onLostTrack();
+      this._emitLive();
+      return;
+    }
 
-    this._currentAnkleY = ankleY;
-    const inZone = feetInZone(landmarks);
-    this._inZone = inZone;
+    const tracked = poseReady(landmarks);
+    this._tracked = tracked;
+    this._lostCount = 0;
 
     if (this.state === JT_STATE.AWAITING) {
-      if (inZone) {
-        this._samples = [ankleY];
+      if (tracked || noseTracked(landmarks)) {
+        this._samples = [trackY];
         this._baselineStart = performance.now();
         this._setState(JT_STATE.BASELINE);
       }
@@ -88,51 +110,52 @@ export const JumpTracker = {
       return;
     }
 
-    if (!inZone && this.state !== JT_STATE.JUMPING) {
-      this._samples = [];
-      this._baselineAnkleY = null;
-      this._setState(JT_STATE.AWAITING);
-      this._emitLive();
-      return;
-    }
-
     if (this.state === JT_STATE.BASELINE) {
-      if (!inZone) {
-        this._setState(JT_STATE.AWAITING);
-        this._emitLive();
-        return;
-      }
-      this._samples.push(ankleY);
+      this._samples.push(trackY);
       const elapsed = performance.now() - this._baselineStart;
+      const recent = this._samples.slice(-12);
+      const still = recent.length >= MIN_SAMPLES && this._variance(recent) < STILL_VARIANCE;
+      const longEnough = elapsed >= BASELINE_MS && this._samples.length >= MIN_SAMPLES;
+      const stillLongEnough = elapsed >= MIN_STILL_MS && still;
 
-      if (elapsed >= BASELINE_MS && this._samples.length >= MIN_SAMPLES) {
-        this._baselineAnkleY =
-          this._samples.reduce((a, b) => a + b) / this._samples.length;
-        this._peakAnkleY = this._baselineAnkleY;
+      if (stillLongEnough || longEnough) {
+        this._baselineY = this._samples.reduce((a, b) => a + b) / this._samples.length;
+        this._peakY = this._baselineY;
+        this._bodyScale = bodyScaleNorm(landmarks);
         this._setState(JT_STATE.READY);
       }
     } else if (this.state === JT_STATE.READY) {
-      if (this._baselineAnkleY - ankleY > JUMP_THRESHOLD) {
-        this._peakAnkleY = ankleY;
+      const threshold = (this._bodyScale || 0.35) * JUMP_RATIO;
+      if (this._baselineY - trackY > threshold) {
+        this._peakY = trackY;
+        this._landingCount = 0;
         this._setState(JT_STATE.JUMPING);
       }
     } else if (this.state === JT_STATE.JUMPING) {
-      if (ankleY < this._peakAnkleY) this._peakAnkleY = ankleY;
+      if (trackY < this._peakY) this._peakY = trackY;
 
-      if (ankleY >= this._baselineAnkleY - JUMP_THRESHOLD * 0.35) {
-        const normDelta = this._baselineAnkleY - this._peakAnkleY;
-        const jumpM = normDelta * EXHIBIT_M_PER_UNIT;
+      const landingBand = (this._bodyScale || 0.35) * LANDING_RATIO;
+      if (trackY >= this._baselineY - landingBand) {
+        this._landingCount++;
+      } else {
+        this._landingCount = 0;
+      }
+
+      if (this._landingCount >= LANDING_FRAMES) {
+        const normDelta = this._baselineY - this._peakY;
+        const scale = this._bodyScale || bodyScaleNorm(landmarks);
+        const jumpM = normDeltaToMeters(normDelta, scale);
 
         if (jumpM >= MIN_JUMP_M && jumpM <= MAX_JUMP_M) {
           this._setState(JT_STATE.DONE);
           if (this.onJumpCaptured) this.onJumpCaptured(jumpM, normDelta);
           setTimeout(() => {
-            this._peakAnkleY = this._baselineAnkleY;
-            this._samples = [];
+            this._resetTracking();
             this._setState(JT_STATE.AWAITING);
-          }, 1500);
+          }, 1200);
         } else {
-          this._peakAnkleY = this._baselineAnkleY;
+          this._peakY = this._baselineY;
+          this._landingCount = 0;
           this._setState(JT_STATE.READY);
         }
       }
@@ -141,21 +164,48 @@ export const JumpTracker = {
     this._emitLive();
   },
 
+  _onLostTrack() {
+    if (this.state === JT_STATE.JUMPING) return;
+    this._tracked = false;
+    this._lostCount++;
+    if (this._lostCount >= LOST_FRAMES) {
+      this._resetTracking();
+      this._setState(JT_STATE.AWAITING);
+    }
+  },
+
+  _smoothNose(landmarks) {
+    if (!noseTracked(landmarks)) return null;
+    const raw = landmarks[LM.NOSE].y;
+    if (this._smoothY == null) {
+      this._smoothY = raw;
+    } else {
+      this._smoothY = EMA_ALPHA * raw + (1 - EMA_ALPHA) * this._smoothY;
+    }
+    return this._smoothY;
+  },
+
+  _variance(samples) {
+    const mean = samples.reduce((a, b) => a + b) / samples.length;
+    return samples.reduce((s, v) => s + (v - mean) ** 2, 0) / samples.length;
+  },
+
+  _resetTracking() {
+    this._baselineY = null;
+    this._peakY = null;
+    this._smoothY = null;
+    this._bodyScale = null;
+    this._samples = [];
+    this._landingCount = 0;
+    this._lostCount = 0;
+  },
+
   _emitLive() {
     if (this.onLiveUpdate) this.onLiveUpdate(this.getLiveMetrics());
   },
 
-  _avgAnkleY(landmarks) {
-    const la = landmarks[LM.L_ANKLE];
-    const ra = landmarks[LM.R_ANKLE];
-    if (!la && !ra) return null;
-    if (!la) return ra.y;
-    if (!ra) return la.y;
-    return (la.y + ra.y) / 2;
-  },
-
   _setState(state) {
     this.state = state;
-    if (this.onStateChange) this.onStateChange(state, this._inZone);
+    if (this.onStateChange) this.onStateChange(state, this._tracked);
   },
 };

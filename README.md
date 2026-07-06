@@ -8,37 +8,20 @@ Jump in front of your camera and see how high you'd go on **Earth, Moon, Mars, a
 ## How it works
 
 1. **Enable camera** — a small picture-in-picture view appears in the corner
-2. **Stand on the mark** (exhibit) or **stand in frame** (web/mobile)
-3. **Hold still** ~1.2 s while the app calibrates ankle baseline
-4. **Jump** — MediaPipe Pose tracks ankle rise; meters fill live during the jump
-5. **Results** — all four astronauts hop with gravity-scaled heights
+2. **Stand in frame** with your full lower body visible
+3. **Hold still** briefly while the app calibrates (stillness detection, ~0.5–1 s)
+4. **Jump** — meters fill live during the jump; all four astronauts hop on landing
+5. **Results** — gravity-scaled heights on Earth, Moon, Mars, and Pluto
 
-Jump height is measured from **ankle rise** in the camera image, converted to metres via install calibration (`mPerUnit`).
-
-## Exhibit / kiosk setup
-
-For a fixed camera and floor mark:
-
-1. Tape a "stand here" spot on the floor aligned with the PiP ellipse
-2. Tune zone position: `?zoneX=0.5&zoneY=0.78&zoneW=0.2&zoneH=0.1`
-3. Calibrate scale once: jump a known height, adjust `?mPerUnit=2.8` until Earth reads correctly
-4. Kiosk mode: `?autocam=1` auto-starts the camera
-
-The calibrated `mPerUnit` value is saved in `localStorage` (`og_mPerUnit`).
-
-## Web / mobile (no floor mark)
-
-Append `?zone=off` — the app uses frame-centre detection instead of the stand ellipse. Stand with feet visible in the lower half of the frame.
+Jump height is measured from **ankle rise**, scaled relative to your leg length in the frame. Optional `?mPerUnit=` overrides for fixed-camera installs.
 
 ## URL parameters
 
 | Param | Default | Description |
 |-------|---------|-------------|
 | `autocam=1` | off | Auto-start camera on load |
-| `zone=off` | off | Web mode without floor mark |
-| `mPerUnit` | 2.8 | Metres per normalised ankle-rise at fixed spot |
-| `zoneX`, `zoneY` | 0.5, 0.78 | Stand ellipse centre (normalised 0–1) |
-| `zoneW`, `zoneH` | 0.2, 0.1 | Stand ellipse size (normalised) |
+| `legM` | 0.88 | Estimated leg length (m) for body-relative scaling |
+| `mPerUnit` | — | Fixed-camera override: metres per normalised ankle rise |
 | `scale=auto` | off | Enable ESP32 load-cell integration (optional) |
 
 ## Run locally
@@ -53,7 +36,7 @@ Open `http://localhost:3000`. Camera access requires HTTPS on non-localhost orig
 
 - Modern browser (Chrome, Edge, Safari 16+, Firefox)
 - Webcam or phone camera with `getUserMedia` support
-- Good lighting; full body visible in frame
+- Good lighting; full lower body visible, centred in frame
 
 ## Physics
 
@@ -78,8 +61,8 @@ js/
   physics.js      — gravity constants, jump scaling formulas
   camera.js       — getUserMedia wrapper
   poseDetector.js — MediaPipe Pose Landmarker (CDN WASM), skeleton overlay
-  jumpTracker.js  — baseline + peak ankle detection state machine
-  standZone.js    — exhibit stand-here ellipse + mPerUnit calibration
+  jumpTracker.js  — stillness baseline + adaptive jump detection
+  standZone.js    — pose readiness + body-relative calibration
 index.html        — 4-world panels + camera PiP
 styles.css        — panel animations, live meter glow, responsive layout
 scale.js          — WebSocket client (ESP32 exhibit mode, optional)

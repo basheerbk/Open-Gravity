@@ -32,9 +32,36 @@
     <p class="exhibit-banner__impact" id="exhibitImpact" hidden></p>
   </div>
 
-  <!-- Status bar -->
-  <div class="status-bar" id="resultsBar">
-    <span class="status-bar__info" id="jumpResultInfo">Stand on the mark and jump — see your height on every world</span>
+  <!-- Camera bar (below header) -->
+  <div class="camera-bar">
+    <aside class="camera-pip" id="cameraPip" aria-label="Your camera">
+      <div class="camera-pip__header">
+        <span class="camera-pip__label">Camera</span>
+        <span class="camera-pip__phase" id="jumpPhaseLabel">Enable camera</span>
+      </div>
+      <div class="camera-pip__media">
+        <video id="poseVideo" class="camera-pip__video" playsinline muted autoplay></video>
+        <canvas id="poseCanvas" class="camera-pip__canvas"></canvas>
+        <div class="camera-pip__overlay" id="cameraOverlay">
+          <button type="button" class="camera-pip__enable" id="cameraStartBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.87v6.26a1 1 0 0 1-1.447.94L15 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="3" y="8" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.75"/>
+            </svg>
+            Enable camera
+          </button>
+          <p class="camera-pip__error" id="cameraPermError" hidden></p>
+        </div>
+      </div>
+      <div class="camera-pip__footer">
+        <button type="button" class="camera-pip__retry" id="jumpAgainBtn" hidden title="Recalibrate baseline">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M21 3v5h-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </aside>
   </div>
 
   <!-- ── 4-world panels (always visible) ─────────────────────────────── -->
@@ -213,48 +240,18 @@
 
   </main>
 
-  <!-- ── Camera picture-in-picture ─────────────────────────────────────── -->
-  <aside class="camera-pip" id="cameraPip" aria-label="Your camera">
-    <div class="camera-pip__header">
-      <span class="camera-pip__label">Jump spot</span>
-      <span class="camera-pip__phase" id="jumpPhaseLabel">Enable camera</span>
-    </div>
-    <div class="camera-pip__media">
-      <video id="poseVideo" class="camera-pip__video" playsinline muted autoplay></video>
-      <canvas id="poseCanvas" class="camera-pip__canvas"></canvas>
-      <div class="camera-pip__overlay" id="cameraOverlay">
-        <button type="button" class="camera-pip__enable" id="cameraStartBtn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.87v6.26a1 1 0 0 1-1.447.94L15 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-            <rect x="3" y="8" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.75"/>
-          </svg>
-          Enable camera
-        </button>
-        <p class="camera-pip__error" id="cameraPermError" hidden></p>
-      </div>
-    </div>
-    <div class="camera-pip__footer">
-      <button type="button" class="camera-pip__retry" id="jumpAgainBtn" hidden title="Recalibrate baseline">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M21 3v5h-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-    </div>
-  </aside>
-
   <!-- ── About modal ───────────────────────────────────────────────────── -->
   <dialog class="modal modal--about" id="aboutModal">
     <div class="modal__form modal__form--about">
       <button type="button" class="modal__close modal__close--float" id="aboutCloseBtn" aria-label="Close">&times;</button>
       <h2 class="about-title">About</h2>
-      <p class="about-lead"><strong>Open Gravity</strong> — an exhibit where kids stand on the mark, jump, and see how high they'd go on Earth, the Moon, Mars, and Pluto.</p>
-      <p class="about-body">Place a camera facing the jump spot. Each kid steps on the <strong>STAND HERE</strong> mark, holds still, then jumps. Pose tracking measures the lift from their feet and scales it across four worlds — no weight or height needed.</p>
+      <p class="about-lead"><strong>Open Gravity</strong> — jump in front of your camera and see how high you'd go on Earth, the Moon, Mars, and Pluto.</p>
+      <p class="about-body">Stand in frame, hold still for a moment, then jump. Pose tracking measures the lift from your feet and scales it across four worlds — no weight or height needed.</p>
       <ul class="about-steps">
-        <li>Fixed jump spot with on-screen marker</li>
-        <li>Feet-based measurement at the mark</li>
+        <li>Camera tracks your skeleton in real time</li>
+        <li>Feet-based jump measurement</li>
         <li>All four astronauts hop together, scaled by gravity</li>
-        <li>Next kid: step on the mark again</li>
+        <li>Next person: step in frame and jump again</li>
       </ul>
       <div class="about-footer">
         <a class="about-link" href="https://github.com/basheerbk/Open-Gravity" target="_blank" rel="noopener noreferrer">GitHub</a>
