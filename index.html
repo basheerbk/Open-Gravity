@@ -13,7 +13,9 @@
   <header class="header">
     <div class="header__inner">
       <h1 class="header__title">Open Gravity</h1>
+      <p class="display-phase" id="displayPhase">Waiting for camera…</p>
       <div class="header__actions">
+        <span class="sync-status" id="syncStatus"></span>
         <button type="button" class="header__icon-btn" id="aboutBtn" aria-label="About">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.75"/>
@@ -38,6 +40,10 @@
       <div class="camera-pip__header">
         <span class="camera-pip__label">Camera</span>
         <span class="camera-pip__phase" id="jumpPhaseLabel">Enable camera</span>
+        <div class="camera-pip__links">
+          <a class="camera-pip__link" id="openDisplayBtn" href="?role=display">Open display window</a>
+          <a class="camera-pip__link" id="openCameraBtn" href="?role=camera&amp;autocam=1">Open camera window</a>
+        </div>
       </div>
       <div class="camera-pip__media">
         <video id="poseVideo" class="camera-pip__video" playsinline muted autoplay></video>
@@ -65,7 +71,92 @@
   </div>
 
   <!-- ── 4-world panels (always visible) ─────────────────────────────── -->
+  <!-- World panels: 8 planets + Moon + Pluto -->
   <main class="panels" id="panels">
+
+    <section class="panel panel--mercury" data-body="mercury">
+      <div class="panel__bg" aria-hidden="true">
+        <div class="panel__sky"><div class="panel__stars panel__stars--sparse"></div></div>
+        <div class="panel__ground"><div class="panel__platform"></div></div>
+      </div>
+      <div class="panel__hud">
+        <div class="panel__meta">
+          <h2 class="panel__title">Mercury</h2>
+          <p class="panel__gravity"><span class="panel__g-value">3.7</span> m/s²</p>
+        </div>
+        <div class="scene">
+          <div class="jump-meter" aria-label="Jump height meter">
+            <span class="jump-meter__title" aria-hidden="true">Jump</span>
+            <div class="jump-meter__scale">
+              <div class="jump-meter__labels" data-meter-labels aria-hidden="true"></div>
+              <div class="jump-meter__track">
+                <div class="jump-meter__fill" data-jump-fill></div>
+                <div class="jump-meter__cap" data-jump-cap aria-hidden="true"></div>
+              </div>
+            </div>
+            <span class="jump-meter__value"><span data-jump-display>—</span> m</span>
+            <span class="jump-meter__note" data-jump-note></span>
+          </div>
+          <div class="astronaut-wrap">
+            <img src="astronaut.svg" alt="" class="astronaut" width="160" height="240" />
+            <div class="shadow"></div>
+            <div class="platform-edge" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="stats-card stats-card--gravity">
+          <div class="stat">
+            <span class="stat__label">Gravity</span>
+            <div class="stat__row">
+              <span class="stat__value" data-gravity-display>3.7</span>
+              <span class="stat__unit">m/s²</span>
+            </div>
+          </div>
+          <span class="stat__compare" data-mult-display>Reference</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel--venus" data-body="venus">
+      <div class="panel__bg" aria-hidden="true">
+        <div class="panel__sky"><div class="panel__haze"></div></div>
+        <div class="panel__ground"><div class="panel__platform"></div></div>
+      </div>
+      <div class="panel__hud">
+        <div class="panel__meta">
+          <h2 class="panel__title">Venus</h2>
+          <p class="panel__gravity"><span class="panel__g-value">8.87</span> m/s²</p>
+        </div>
+        <div class="scene">
+          <div class="jump-meter" aria-label="Jump height meter">
+            <span class="jump-meter__title" aria-hidden="true">Jump</span>
+            <div class="jump-meter__scale">
+              <div class="jump-meter__labels" data-meter-labels aria-hidden="true"></div>
+              <div class="jump-meter__track">
+                <div class="jump-meter__fill" data-jump-fill></div>
+                <div class="jump-meter__cap" data-jump-cap aria-hidden="true"></div>
+              </div>
+            </div>
+            <span class="jump-meter__value"><span data-jump-display>—</span> m</span>
+            <span class="jump-meter__note" data-jump-note></span>
+          </div>
+          <div class="astronaut-wrap">
+            <img src="astronaut.svg" alt="" class="astronaut" width="160" height="240" />
+            <div class="shadow"></div>
+            <div class="platform-edge" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="stats-card stats-card--gravity">
+          <div class="stat">
+            <span class="stat__label">Gravity</span>
+            <div class="stat__row">
+              <span class="stat__value" data-gravity-display>8.87</span>
+              <span class="stat__unit">m/s²</span>
+            </div>
+          </div>
+          <span class="stat__compare" data-mult-display>Reference</span>
+        </div>
+      </div>
+    </section>
 
     <section class="panel panel--earth" data-body="earth">
       <div class="panel__bg" aria-hidden="true">
@@ -111,10 +202,8 @@
 
     <section class="panel panel--moon" data-body="moon">
       <div class="panel__bg" aria-hidden="true">
-        <div class="panel__sky">
-          <div class="panel__stars"></div>
-          <div class="panel__earth-distant"></div>
-        </div>
+        <div class="panel__sky"><div class="panel__stars"></div>
+          <div class="panel__earth-distant"></div></div>
         <div class="panel__ground"><div class="panel__platform"></div></div>
       </div>
       <div class="panel__hud">
@@ -196,6 +285,174 @@
       </div>
     </section>
 
+    <section class="panel panel--jupiter" data-body="jupiter">
+      <div class="panel__bg" aria-hidden="true">
+        <div class="panel__sky"><div class="panel__bands"></div></div>
+        <div class="panel__ground"><div class="panel__platform"></div></div>
+      </div>
+      <div class="panel__hud">
+        <div class="panel__meta">
+          <h2 class="panel__title">Jupiter</h2>
+          <p class="panel__gravity"><span class="panel__g-value">24.79</span> m/s²</p>
+        </div>
+        <div class="scene">
+          <div class="jump-meter" aria-label="Jump height meter">
+            <span class="jump-meter__title" aria-hidden="true">Jump</span>
+            <div class="jump-meter__scale">
+              <div class="jump-meter__labels" data-meter-labels aria-hidden="true"></div>
+              <div class="jump-meter__track">
+                <div class="jump-meter__fill" data-jump-fill></div>
+                <div class="jump-meter__cap" data-jump-cap aria-hidden="true"></div>
+              </div>
+            </div>
+            <span class="jump-meter__value"><span data-jump-display>—</span> m</span>
+            <span class="jump-meter__note" data-jump-note></span>
+          </div>
+          <div class="astronaut-wrap">
+            <img src="astronaut.svg" alt="" class="astronaut" width="160" height="240" />
+            <div class="shadow"></div>
+            <div class="platform-edge" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="stats-card stats-card--gravity">
+          <div class="stat">
+            <span class="stat__label">Gravity</span>
+            <div class="stat__row">
+              <span class="stat__value" data-gravity-display>24.79</span>
+              <span class="stat__unit">m/s²</span>
+            </div>
+          </div>
+          <span class="stat__compare" data-mult-display>Reference</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel--saturn" data-body="saturn">
+      <div class="panel__bg" aria-hidden="true">
+        <div class="panel__sky"><div class="panel__stars"></div></div>
+        <div class="panel__ground"><div class="panel__platform"></div></div>
+      </div>
+      <div class="panel__hud">
+        <div class="panel__meta">
+          <h2 class="panel__title">Saturn</h2>
+          <p class="panel__gravity"><span class="panel__g-value">10.44</span> m/s²</p>
+        </div>
+        <div class="scene">
+          <div class="jump-meter" aria-label="Jump height meter">
+            <span class="jump-meter__title" aria-hidden="true">Jump</span>
+            <div class="jump-meter__scale">
+              <div class="jump-meter__labels" data-meter-labels aria-hidden="true"></div>
+              <div class="jump-meter__track">
+                <div class="jump-meter__fill" data-jump-fill></div>
+                <div class="jump-meter__cap" data-jump-cap aria-hidden="true"></div>
+              </div>
+            </div>
+            <span class="jump-meter__value"><span data-jump-display>—</span> m</span>
+            <span class="jump-meter__note" data-jump-note></span>
+          </div>
+          <div class="astronaut-wrap">
+            <img src="astronaut.svg" alt="" class="astronaut" width="160" height="240" />
+            <div class="shadow"></div>
+            <div class="platform-edge" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="stats-card stats-card--gravity">
+          <div class="stat">
+            <span class="stat__label">Gravity</span>
+            <div class="stat__row">
+              <span class="stat__value" data-gravity-display>10.44</span>
+              <span class="stat__unit">m/s²</span>
+            </div>
+          </div>
+          <span class="stat__compare" data-mult-display>Reference</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel--uranus" data-body="uranus">
+      <div class="panel__bg" aria-hidden="true">
+        <div class="panel__sky"><div class="panel__stars"></div></div>
+        <div class="panel__ground"><div class="panel__platform"></div></div>
+      </div>
+      <div class="panel__hud">
+        <div class="panel__meta">
+          <h2 class="panel__title">Uranus</h2>
+          <p class="panel__gravity"><span class="panel__g-value">8.69</span> m/s²</p>
+        </div>
+        <div class="scene">
+          <div class="jump-meter" aria-label="Jump height meter">
+            <span class="jump-meter__title" aria-hidden="true">Jump</span>
+            <div class="jump-meter__scale">
+              <div class="jump-meter__labels" data-meter-labels aria-hidden="true"></div>
+              <div class="jump-meter__track">
+                <div class="jump-meter__fill" data-jump-fill></div>
+                <div class="jump-meter__cap" data-jump-cap aria-hidden="true"></div>
+              </div>
+            </div>
+            <span class="jump-meter__value"><span data-jump-display>—</span> m</span>
+            <span class="jump-meter__note" data-jump-note></span>
+          </div>
+          <div class="astronaut-wrap">
+            <img src="astronaut.svg" alt="" class="astronaut" width="160" height="240" />
+            <div class="shadow"></div>
+            <div class="platform-edge" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="stats-card stats-card--gravity">
+          <div class="stat">
+            <span class="stat__label">Gravity</span>
+            <div class="stat__row">
+              <span class="stat__value" data-gravity-display>8.69</span>
+              <span class="stat__unit">m/s²</span>
+            </div>
+          </div>
+          <span class="stat__compare" data-mult-display>Reference</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel--neptune" data-body="neptune">
+      <div class="panel__bg" aria-hidden="true">
+        <div class="panel__sky"><div class="panel__stars"></div></div>
+        <div class="panel__ground"><div class="panel__platform"></div></div>
+      </div>
+      <div class="panel__hud">
+        <div class="panel__meta">
+          <h2 class="panel__title">Neptune</h2>
+          <p class="panel__gravity"><span class="panel__g-value">11.15</span> m/s²</p>
+        </div>
+        <div class="scene">
+          <div class="jump-meter" aria-label="Jump height meter">
+            <span class="jump-meter__title" aria-hidden="true">Jump</span>
+            <div class="jump-meter__scale">
+              <div class="jump-meter__labels" data-meter-labels aria-hidden="true"></div>
+              <div class="jump-meter__track">
+                <div class="jump-meter__fill" data-jump-fill></div>
+                <div class="jump-meter__cap" data-jump-cap aria-hidden="true"></div>
+              </div>
+            </div>
+            <span class="jump-meter__value"><span data-jump-display>—</span> m</span>
+            <span class="jump-meter__note" data-jump-note></span>
+          </div>
+          <div class="astronaut-wrap">
+            <img src="astronaut.svg" alt="" class="astronaut" width="160" height="240" />
+            <div class="shadow"></div>
+            <div class="platform-edge" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="stats-card stats-card--gravity">
+          <div class="stat">
+            <span class="stat__label">Gravity</span>
+            <div class="stat__row">
+              <span class="stat__value" data-gravity-display>11.15</span>
+              <span class="stat__unit">m/s²</span>
+            </div>
+          </div>
+          <span class="stat__compare" data-mult-display>Reference</span>
+        </div>
+      </div>
+    </section>
+
     <section class="panel panel--pluto" data-body="pluto">
       <div class="panel__bg" aria-hidden="true">
         <div class="panel__sky"><div class="panel__stars panel__stars--sparse"></div></div>
@@ -245,14 +502,19 @@
     <div class="modal__form modal__form--about">
       <button type="button" class="modal__close modal__close--float" id="aboutCloseBtn" aria-label="Close">&times;</button>
       <h2 class="about-title">About</h2>
-      <p class="about-lead"><strong>Open Gravity</strong> — jump in front of your camera and see how high you'd go on Earth, the Moon, Mars, and Pluto.</p>
-      <p class="about-body">Stand in frame, hold still for a moment, then jump. Pose tracking measures the lift from your feet and scales it across four worlds — no weight or height needed.</p>
+      <p class="about-lead"><strong>Open Gravity</strong> — jump in front of your camera and see how high you'd go on all eight planets, the Moon, and Pluto.</p>
+      <p class="about-body">Face the camera, hold still for a moment, then jump. Pose tracking measures the nose spike and scales it across ten worlds — no weight or height needed.</p>
       <ul class="about-steps">
         <li>Camera tracks your skeleton in real time</li>
-        <li>Feet-based jump measurement</li>
-        <li>All four astronauts hop together, scaled by gravity</li>
-        <li>Next person: step in frame and jump again</li>
+        <li>Nose-based jump height measurement</li>
+        <li>All ten astronauts hop together, scaled by gravity</li>
+        <li>Exhibit: open a display window on the TV and a camera window on the laptop</li>
       </ul>
+      <p class="about-exhibit">
+        <a class="about-link" id="aboutOpenDisplay" href="?role=display" target="_blank" rel="noopener">Open display</a>
+        <span class="about-dot" aria-hidden="true">·</span>
+        <a class="about-link" id="aboutOpenCamera" href="?role=camera&amp;autocam=1" target="_blank" rel="noopener">Open camera</a>
+      </p>
       <div class="about-footer">
         <a class="about-link" href="https://github.com/basheerbk/Open-Gravity" target="_blank" rel="noopener noreferrer">GitHub</a>
         <span class="about-dot" aria-hidden="true">·</span>
@@ -260,7 +522,7 @@
         <span class="about-dot" aria-hidden="true">·</span>
         <span class="about-label">Open source</span>
       </div>
-      <p class="about-tagline">Jump once. Explore four worlds.</p>
+      <p class="about-tagline">Jump once. Explore ten worlds.</p>
     </div>
   </dialog>
 

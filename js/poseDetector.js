@@ -5,7 +5,17 @@ import {
   DrawingUtils,
 } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
 
-import { drawBaselineBar, poseReady } from "./standZone.js";
+import {
+  drawBaselineBar,
+  drawTrackBox,
+  poseReady,
+  personInBox,
+  setViewport,
+  mapToVisible,
+  drawMirroredText,
+  trackBoxPx,
+  TRACK_BOX,
+} from "./standZone.js";
 import { JT_STATE } from "./jumpTracker.js";
 
 const WASM_PATH =
@@ -85,24 +95,40 @@ export const PoseDetector = {
 
   drawFrame(canvas, videoEl, landmarks, feedback = {}) {
     const ctx = canvas.getContext("2d");
-    const vw = videoEl.videoWidth  || 640;
-    const vh = videoEl.videoHeight || 480;
 
-    if (canvas.width !== vw || canvas.height !== vh) {
-      canvas.width  = vw;
-      canvas.height = vh;
+    // Track the camera's real aspect ratio so overlays match the
+    // object-fit: cover crop applied to the <video> element.
+    setViewport(videoEl.videoWidth, videoEl.videoHeight);
+
+    // Size the canvas to its actual displayed box (always 4:3, see CSS) so
+    // canvas pixels map 1:1 with what's visually shown — no CSS stretching.
+    const cw = canvas.clientWidth  || 320;
+    const ch = canvas.clientHeight || 240;
+    if (canvas.width !== cw || canvas.height !== ch) {
+      canvas.width  = cw;
+      canvas.height = ch;
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    const inBox = personInBox(landmarks);
     const tracked = poseReady(landmarks);
     const { state = JT_STATE.IDLE, baselineProgress = 0, liveJumpM = 0 } = feedback;
+
+    drawTrackBox(ctx, canvas.width, canvas.height, inBox);
 
     if (state === JT_STATE.BASELINE) {
       drawBaselineBar(ctx, canvas.width, canvas.height, baselineProgress);
     }
 
     if (!landmarks) return;
+
+    // Remap raw (uncropped) landmarks onto the visible, cover-cropped frame
+    // so the skeleton lines up with what's actually shown in the video.
+    const visLandmarks = landmarks.map((p) => {
+      const v = mapToVisible(p.x, p.y);
+      return { ...p, x: v.x, y: v.y };
+    });
 
     const scale = Math.min(canvas.width, canvas.height);
     const dotR  = Math.max(4, scale / 45);
@@ -113,21 +139,31 @@ export const PoseDetector = {
       this._drawingUtils = new DrawingUtils(ctx);
     }
 
-    if (style.glow) {
+    // Only ever draw/track what's physically inside the box — clip so any
+    // limb poking outside it is simply not rendered at all.
+    const box = trackBoxPx(canvas.width, canvas.height);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(box.x, box.y, box.w, box.h);
+    ctx.clip();
+
+    ctx.globalAlpha = inBox ? 1 : 0.35;
+
+    if (style.glow && inBox) {
       this._drawingUtils.drawConnectors(
-        landmarks,
+        visLandmarks,
         PoseLandmarker.POSE_CONNECTIONS,
         { color: style.glow, lineWidth: style.lineWidth + 4 },
       );
     }
 
     this._drawingUtils.drawConnectors(
-      landmarks,
+      visLandmarks,
       PoseLandmarker.POSE_CONNECTIONS,
       { color: style.color, lineWidth: style.lineWidth },
     );
 
-    this._drawingUtils.drawLandmarks(landmarks, {
+    this._drawingUtils.drawLandmarks(visLandmarks, {
       radius: dotR * 0.7,
       color: "rgba(255,255,255,0.85)",
       fillColor: style.color,
@@ -135,8 +171,9 @@ export const PoseDetector = {
     });
 
     for (const { idx, color, label } of KEY_JOINTS) {
-      const pt = landmarks[idx];
-      if (!pt || (pt.visibility ?? 1) < 0.3) continue;
+      const raw = landmarks[idx];
+      const pt = visLandmarks[idx];
+      if (!raw || (raw.visibility ?? 1) < 0.3) continue;
 
       const x = pt.x * canvas.width;
       const y = pt.y * canvas.height;
@@ -151,22 +188,26 @@ export const PoseDetector = {
 
       if (label) {
         ctx.font = `600 ${Math.max(9, scale / 55)}px "DM Sans", sans-serif`;
+        ctx.textAlign = "left";
         ctx.fillStyle = color;
-        ctx.fillText(label, x + keyR + 2, y + 3);
+        drawMirroredText(ctx, label, x + keyR + 2, y + 3);
       }
     }
 
-    const nose = landmarks[LM.NOSE];
-    if (nose && (nose.visibility ?? 1) > 0.2) {
+    const rawNose = landmarks[LM.NOSE];
+    const nose = visLandmarks[LM.NOSE];
+    if (rawNose && (rawNose.visibility ?? 1) > 0.2 && inBox) {
       const nx = nose.x * canvas.width;
       const ny = nose.y * canvas.height;
+      const lineL = TRACK_BOX.x * canvas.width;
+      const lineR = (TRACK_BOX.x + TRACK_BOX.w) * canvas.width;
 
       ctx.strokeStyle = state === JT_STATE.JUMPING ? "#ffb450" : "#ffffff";
       ctx.lineWidth = state === JT_STATE.JUMPING ? 2 : 1.5;
       ctx.setLineDash([3, 3]);
       ctx.beginPath();
-      ctx.moveTo(0, ny);
-      ctx.lineTo(canvas.width, ny);
+      ctx.moveTo(lineL, ny);
+      ctx.lineTo(lineR, ny);
       ctx.stroke();
       ctx.setLineDash([]);
 
@@ -174,8 +215,10 @@ export const PoseDetector = {
         ctx.font = `700 ${Math.max(11, scale / 50)}px "Syne", sans-serif`;
         ctx.textAlign = "center";
         ctx.fillStyle = "#ffb450";
-        ctx.fillText(`${liveJumpM.toFixed(2)} m`, nx, ny - 12);
+        drawMirroredText(ctx, `${liveJumpM.toFixed(2)} m`, nx, ny - 12);
       }
     }
+
+    ctx.restore();
   },
 };

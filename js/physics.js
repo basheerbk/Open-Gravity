@@ -1,11 +1,17 @@
 export const GRAVITY = {
-  earth: 9.81,
-  moon:  1.62,
-  mars:  3.71,
-  pluto: 0.62,
+  mercury: 3.7,
+  venus:   8.87,
+  earth:   9.81,
+  moon:    1.62,
+  mars:    3.71,
+  jupiter: 24.79,
+  saturn:  10.44,
+  uranus:  8.69,
+  neptune: 11.15,
+  pluto:   0.62,
 };
 
-export const DEFAULT_EARTH_JUMP = 0.5; // shown before any real jump is measured
+export const DEFAULT_EARTH_JUMP = 0.5;
 export const METER_STEP = 0.5;
 
 /** Scale a measured Earth jump to another world. */
@@ -13,7 +19,7 @@ export function jumpOnWorld(earthJumpM, g) {
   return earthJumpM * (GRAVITY.earth / g);
 }
 
-/** Jump multiplier vs Earth (e.g. Moon = 6.1). */
+/** Jump multiplier vs Earth (e.g. Moon ≈ 6.1). */
 export function jumpMultiplier(g) {
   return GRAVITY.earth / g;
 }
