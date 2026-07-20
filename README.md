@@ -8,10 +8,10 @@ Jump in front of your camera and see how high you'd go on **all eight planets, t
 ## How it works
 
 1. **Enable camera** — camera bar under the header
-2. **Face the camera** with your upper body visible
+2. **Stand inside the dashed track box** with your upper body visible — everything outside the box is masked out and isn't tracked
 3. **Hold still** briefly while the app calibrates (~0.5–1 s)
-4. **Jump** — meters fill live during the jump; all four astronauts hop on landing
-5. **Results** — gravity-scaled heights on Earth, Moon, Mars, and Pluto
+4. **Jump** — meters fill live during the jump; all ten astronauts hop on landing
+5. **Results** — gravity-scaled heights across all ten worlds
 
 Jump height is measured from the **nose spike** in the camera frame, scaled relative to visible body height. Optional `?mPerUnit=` or `?bodyM=` overrides for fixed installs.
 
@@ -28,7 +28,7 @@ You can also use the **Open display window** / **Open camera window** links in t
 
 | Role | URL | Shows |
 |------|-----|--------|
-| Display (TV) | `?role=display` | 4 world panels only |
+| Display (TV) | `?role=display` | All 10 world panels only |
 | Camera (laptop) | `?role=camera` | Camera + tracking only |
 | Solo (default) | *(none)* | Combined UI |
 
@@ -41,7 +41,7 @@ Both windows must be the **same browser** and **same origin** (e.g. both Chrome 
 | `role=display` | solo | TV window — panels only, listens for jumps |
 | `role=camera` | solo | Laptop window — camera only, broadcasts jumps |
 | `autocam=1` | off | Auto-start camera on load |
-| `boxX`, `boxY`, `boxW`, `boxH` | 0.34, 0, 0.32, 1 | Track box inside camera (normalised 0–1) |
+| `boxX`, `boxY`, `boxW`, `boxH` | 0.34, 0, 0.32, 1 | Track box inside camera (normalised 0–1) — only what's inside is tracked; the rest is masked black |
 | `bodyM` | 1.65 | Estimated body height (m) for nose-rise scaling |
 | `mPerUnit` | — | Fixed-camera override: metres per normalised rise |
 | `scale=auto` | off | Enable ESP32 load-cell integration (optional) |
@@ -92,7 +92,7 @@ js/
   poseDetector.js — MediaPipe Pose Landmarker (CDN WASM), skeleton overlay
   jumpTracker.js  — nose spike baseline + jump detection
   standZone.js    — pose readiness + body-relative calibration
-index.html        — 4-world panels + camera bar
+index.html        — 10-world panels + camera bar
 styles.css        — panel animations, role layouts
 scale.js          — WebSocket client (ESP32 exhibit mode, optional)
 firmware/         — ESP32 + HX711 sketch (optional hardware)
